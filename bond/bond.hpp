@@ -1,38 +1,26 @@
 #include <eosiolib/eosio.hpp>
-#include <eosiolib/print.hpp>
-
-#include <string>
 
 using namespace eosio;
-using std::string;
 
 class bond : public contract {
 public:
   bond(account_name self) : contract(self) {}
 
   // @abi action
-  void create(const account_name account,
-              const string& username,
-              const string& bio,
-              uint32_t age);
-
-  // @abi action
-  void remove(const account_name account);
-
+  void issue(const account_name account,
+             uint32_t amount);
 private:
 
-  // @abi table profile i64
-  struct profile {
+  // @abi table bonds i64
+  struct bondToken {
     account_name account;
-    string       username;
-    string       bio;
-    uint32_t     age;
+    uint32_t     amount;
 
     account_name primary_key() const { return account; }
-    EOSLIB_SERIALIZE(profile, (account)(username)(bio)(age))
+    EOSLIB_SERIALIZE(bondToken, (account)(amount))
   };
 
-  typedef multi_index<N(profile), profile> _profiles;
+  typedef multi_index<N(bondToken), bondToken> _bonds;
 };
 
-EOSIO_ABI(bond, (create)(remove))
+EOSIO_ABI(bond, (issue))
