@@ -2,21 +2,23 @@
 #include "../helpers.cpp"
 
 void bond::issue(const account_name account,
-                 uint32_t amount) {
+                 double face_value,
+                 uint64_t maturity_date,
+                 double interest_rate) {
   require_auth(account);
 
-  _bonds bond(_self, _self);
+  _accounts accounts(_self, _self);
 
-  auto iterator = bond.find(account);
+  auto iterator = accounts.find(account);
 
-  if (iterator == bond.end()) {
-    bond.emplace(account, [&](auto& b) {
-      b.account = account;
-      b.amount = amount;
+  if (iterator == accounts.end()) {
+    accounts.emplace(account, [&](auto& a) {
+      a.account = account;
+      a.amount = 1;
     });
   } else {
-    bond.modify(iterator, account, [&](auto& b) {
-      b.amount += amount;
+    accounts.modify(iterator, account, [&](auto& a) {
+      a.amount++;
     });
   }
 }
