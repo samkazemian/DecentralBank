@@ -12,7 +12,12 @@ public:
              double face_value,
              uint64_t maturity_date,
              double interest_rate);
+
 private:
+  void create_bond(const account_name account,
+                   double face_value,
+                   uint64_t maturity_date,
+                   double interest_rate);
 
   // @abi table bonds i64
   struct bond_token {
