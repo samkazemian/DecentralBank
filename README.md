@@ -1,33 +1,36 @@
-# DecentralBank: Turing-complete currency and banking software 
+# Decentral Bank: Turing-Complete Currency and Banking Software 
 
-Decentral bank is a software framework which allows a network of peers to partake in decentralized banking activity and monetary policy such as issuing a currency token and keeping its purchasing power stable using a plethora of smart contracts included in the system such as bonds, shares, and collateralized reserves. The decentral bank framework contains many of the cryptocurrency industry standard stability mechanisms for stablecoin systems. Using decentral bank software, users can create stablecoin networks which incorporate various monetary policy functions modeled after real-world banking and economic theories. 
+Decentral Bank is a software framework which allows a network of peers to partake in decentralized banking activity and monetary policy. The network is capable of issuing currency tokens whose purchasing power is maintained through a set of smart contracts included in the system. The mechanisms include but are not limited to the auctioning of bonds and shares and a collateralized reserve system. The Decentral Bank framework contains many of the cryptocurrency industry standard stability mechanisms for stablecoin systems. Users can fork the Decentral Bank software and create stablecoin networks which incorporate various monetary policy functions modeled after real-world banking and economic theories.
 
-A majority of the decentral bank software uses EOSIO technology for Turing-complete smart contract functionality, account-based transactions, and Byzantine consensus.  
+Decentral Bank Software is based on EOSIO technology for Turing-complete smart contract functionality, account-based transactions, and Byzantine consensus.  
 
 ## License
-Decentral Bank software is released under the terms of the MIT license. Decentral Bank software is open source and free to use. The "Decentral bank" repository is not a bank and does not engage in banking activity, transactions, or business. The software is released in an as-is basis and open to all collaborators. 
+Decentral Bank software is released under the terms of the MIT license. Decentral Bank software is open source and free to use. The "Decentral Bank" repository is not a bank and does not engage in banking activity, transactions, or business. The software is released in an as-is basis and open to all collaborators.
 
 
 # Features
 
-## Network consensus 
+## Network Consensus 
 The Decentral Bank system is built using the EOSIO library for the distributed ledger networking layer. As such, the byzantine consensus mechanism of the system is delegated proof of stake system used in EOSIO. The SYS token of the network is used to vote on consensus forming nodes (called block producers). Block producers are rewarded in minted SYS tokens and transaction fees of UTXO tokens.
 
 ## Bonds
-The bond contract creates bond tokens which are sold through an auction. When the currency needs to retract, bond tokens can be printed and auctioned for currency in a reverse Dutch auction every T time period. To increase retractionary monetary policy through the bond mechanism, the contract can increase the interest rate of the bond tokens by a certain denominated amount.
+The bond contract creates bond tokens which are sold through an auction. When the currency needs to retract, bond tokens can be printed and auctioned for currency tokens in a reverse Dutch auction every T time period. To incetivize further retraction through the bond mechanism, the contract can increase the interest rate of the bond tokens by a certain denominated amount.
 
-There can be two types of bonds issued with the contract: coupon bonds and maturity bonds. Coupon bonds pay out the holder a coupon rate in currency until the maturation of the bond. Maturity bonds do not pay out until the maturity date where the holder is issued a lump sum of the face value and interest rate. Bond tokens of the same type with the same maturation date and interest rate are fungible.
+There can be two types of bonds issued with the contract: coupon bonds and maturity bonds. Coupon bonds pay out the holder a coupon rate in currency until the maturation of the bond. Maturity bonds do not pay out until the maturity date, where the holder is issued a lump sum of the face value and interest rate. Bond tokens of the same type and with the same maturation date and interest rate are fungible.
 
 ## Seigniorage Shares
-The seigniorage shares contract prints new share tokens and auctions them for currency in a reverse Dutch auction every R time period. The name of the contract is a homage to Robert Sams' stablecoin mechanism system of the same name since share tokens function similarly here and represent "equity in the network."
+The seigniorage shares contract prints new share tokens and auctions them for currency in a reverse Dutch auction every R time period. The name of the contract is a homage to Robert Sams' stablecoin mechanism system of the same name since share tokens function similarly here and represent "equity in the network".
 
-All share tokens are fungible with one another. The more equity tokens that are printed and auctioned for currency, the more retractionary policy on the currency. Share tokens are used to vote for block producers as well as allocate the transaction fees of the network. They also have a right to printed currency tokens as the network expands. The share token is also the SYS token of the EOSIO software. 
+All share tokens are fungible with one another. The more equity tokens that are printed and auctioned for currency, the greater the retraction of the currency. Share tokens are used to vote for block producers as well as allocate the transaction fees of the network. They also have a right to printed currency tokens as the network expands. The share token is also the SYS token of the EOSIO software.
+
+## Collateralized Token Reserve
+The collateralized token reserve allows for the issued currency tokens to be backed by cryptographic assets, ensuring that the currency tokens can be fully contracted if need be. Users can make time-restricted deposits into the network, through which they can accrue transaction fees collected over a set number of block periods. Transaction fees are distributed to depositors pro-rata.
 
 ## UTXO Based Token Contracts
 The UTXO token contract is a standardized EOSIO smart contract which allows token transacting using only public-private key pairs without the need for an EOSIO account or system interaction. It is similar in feature to the Bitcoin transaction system. To move tokens in a UTXO based contract, an owner only needs the corresponding private key to the public key. A transaction fee is also paid to move the token. No account or EOSIO network interaction is required. 
 
 ## Transaction Fees
-The transfer of currency tokens, bond tokens, and seigniorage share tokens on the decentral bank network can be paid in fees denominated in the token or by staking share tokens similar to standard EOSIO software. 
+The transfer of currency tokens, bond tokens, and seigniorage share tokens on the Decentral Bank Network can be paid in fees denominated in the token or by staking share tokens similar to standard EOSIO software. Fees can be modified to adjust incentives to better match the network's needs.
 
 ## Private Transactions
 The Decentral Bank UTXO token is a fungible token which allows for Bitcoin-like pseudo-anonymity. It would be possible to integrate distributed ledger privacy features such as zero knowledge proofs which would allow for any user to exchange UTXO currency tokens without revealing their identity similar to zCash and Monero networks. 
