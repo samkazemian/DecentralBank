@@ -1,40 +1,36 @@
 #include <bond.hpp>
 #include "../helpers.cpp"
+#include <eosiolib/print.hpp>
 
-void bond::issue(const account_name account,
-                 double face_value,
-                 uint64_t maturity_date,
-                 double interest_rate) {
-  require_auth(account);
+void bond::create(account_name issuer,
+                  asset maximum_supply) {
+  require_auth(_self);
 
-  _accounts accounts(_self, _self);
+  auto symbol = maximum_supply.symbol;
+  eosio_assert(symbol.is_valid(), "invalid symbol name");
+  eosio_assert(maximum_supply.is_valid(), "invalid supply");
+  eosio_assert(maximum_supply.amount > 0, "maximum supply must be positive");
 
-  auto iterator = accounts.find(account);
+  auto symbol_name = symbol.name();
+  bondstats bond_stats_table(_self, symbol_name);
+  auto existing = bond_stats_table.find(symbol_name);
+  eosio_assert(existing == bond_stats_table.end(), "token with symbol already exists");
 
-  if (iterator == accounts.end()) {
-    accounts.emplace(account, [&](auto& a) {
-      a.account = account;
-      a.amount = 1;
-
-      create_bond(account, face_value, maturity_date, interest_rate);
-    });
-  } else {
-    accounts.modify(iterator, account, [&](auto& a) {
-      a.amount++;
-
-      create_bond(account, face_value, maturity_date, interest_rate);
-    });
-  }
+  bond_stats_table.emplace(_self, [&](auto& s) {
+    s.supply.symbol = maximum_supply.symbol;
+    s.max_supply = maximum_supply;
+    s.issuer = issuer;
+  });
 }
 
 void bond::create_bond(const account_name account,
                        double face_value,
                        uint64_t maturity_date,
                        double interest_rate) {
-  _bonds bonds(_self, _self);
+  bonds bonds_table(_self, _self);
 
-  bonds.emplace(account, [&](auto& b) {
-    b.id = bonds.available_primary_key();
+  bonds_table.emplace(account, [&](auto& b) {
+    b.id = bonds_table.available_primary_key();
     b.account = account;
     b.face_value = face_value;
     b.maturity_date = maturity_date;
