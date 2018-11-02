@@ -3,6 +3,7 @@
 #include <eosio.system/native.hpp>
 
 using namespace eosio;
+using namespace std;
 
 class bond : public contract {
 public:
@@ -11,6 +12,17 @@ public:
   // @abi action
   void create(account_name issuer,
               asset maximum_supply);
+
+  // @abi action
+  void issue(account_name to,
+             asset quantity,
+             string memo);
+
+  // @abi action
+  void transfer(account_name from,
+                account_name to,
+                asset quantity,
+                string memo);
 
 private:
   void create_bond(const account_name account,
@@ -52,6 +64,12 @@ private:
   typedef multi_index<N(accounts), account> accounts;
   typedef multi_index<N(bondstats), bond_stat> bondstats;
   typedef multi_index<N(bonds), bond_token> bonds;
+
+  void add_balance(account_name owner,
+                   asset value,
+                   account_name payer);
+  void sub_balance(account_name owner,
+                   asset value);
 };
 
-EOSIO_ABI(bond, (create))
+EOSIO_ABI(bond, (create)(issue)(transfer))
