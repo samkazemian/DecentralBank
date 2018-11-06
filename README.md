@@ -14,7 +14,7 @@ Decentral Bank software is released under the terms of the MIT license. Decentra
 The Decentral Bank system is built using the EOSIO library for the distributed ledger networking layer. As such, the byzantine consensus mechanism of the system is delegated proof of stake system used in EOSIO. The SYS token of the network is used to vote on consensus forming nodes (called block producers). Block producers are rewarded in minted SYS tokens and transaction fees of UTXO tokens.
 
 ## Bonds
-The bond contract creates bond tokens which are sold through an auction. When the currency needs to retract, bond tokens can be printed and auctioned for currency tokens in a reverse Dutch auction every T time period. To incetivize further retraction through the bond mechanism, the contract can increase the interest rate of the bond tokens by a certain denominated amount.
+The bond contract creates bond tokens which are sold through an auction. When the currency needs to retract, bond tokens can be printed and auctioned for currency tokens in a reverse Dutch auction every T time period. To incentivize further retraction through the bond mechanism, the contract can increase the interest rate of the bond tokens by a certain denominated amount.
 
 There can be two types of bonds issued with the contract: coupon bonds and maturity bonds. Coupon bonds pay out the holder a coupon rate in currency until the maturation of the bond. Maturity bonds do not pay out until the maturity date, where the holder is issued a lump sum of the face value and interest rate. Bond tokens of the same type and with the same maturation date and interest rate are fungible.
 
