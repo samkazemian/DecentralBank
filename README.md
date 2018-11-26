@@ -23,11 +23,17 @@ The seigniorage shares contract prints new share tokens and auctions them for cu
 
 All share tokens are fungible with one another. The more equity tokens that are printed and auctioned for currency, the greater the retraction of the currency. Share tokens are used to vote for block producers as well as allocate the transaction fees of the network. They also have a right to printed currency tokens as the network expands. The share token is also the SYS token of the EOSIO software.
 
-## Collateralized Token Reserve
-The collateralized token reserve allows for the issued currency tokens to be backed by cryptographic assets, ensuring that the currency tokens can be fully contracted if need be. Users can make time-restricted deposits into the network, through which they can accrue transaction fees collected over a set number of block periods. Transaction fees are distributed to depositors pro-rata.
+## Reserve
+The collateralized token reserve allows for the issued currency tokens to be backed by cryptographic assets across multiple chains. The reserve is controlled by multi-signature authorization of network consensus nodes/block producers. When new currency is printed by the network and not needed to pay bond holders, seigniorage share holders, and other users, it is placed in the reserve to auction off for various crypto assets. The types of assets held in the reserve, and their proportion, are decided by network consensus nodes/block producers.  
+
+### Basket Reserve
+Basketing multiple crypto assets across multiple chains is important to keep volatility low in assets held. The network's basket smart contract allows conesnsus nodes/block producers to set basket ratios and targets for the crypto assets held in the reserve.
+
+### Depository Reserve
+Users can make time-restricted deposits into the network, through which they can accrue transaction fees collected over a set number of block periods. Transaction fees are distributed to depositors pro-rata.
 
 ## UTXO Based Token Contracts
-The UTXO token contract is a standardized EOSIO smart contract which allows token transacting using only public-private key pairs without the need for an EOSIO account or system interaction. It is similar in feature to the Bitcoin transaction system. To move tokens in a UTXO based contract, an owner only needs the corresponding private key to the public key. A transaction fee is also paid to move the token. No account or EOSIO network interaction is required. 
+The UTXO token contract is a standardized EOSIO smart contract which allows token transacting using only public-private key pairs without the need for an EOSIO account or system action. It is similar in feature to the Bitcoin transaction system. To move tokens in a UTXO based contract, an owner only needs the corresponding private key to the public key. A transaction fee is also paid to move the token. No account or EOSIO network interaction is required. The Decentral Bank network will develop and employ the UTXO based token contracts for its stable currency unit. 
 
 ## Transaction Fees
 The transfer of currency tokens, bond tokens, and seigniorage share tokens on the Decentral Bank Network can be paid in fees denominated in the token or by staking share tokens similar to standard EOSIO software. Fees can be modified to adjust incentives to better match the network's needs.
