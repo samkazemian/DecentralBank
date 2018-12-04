@@ -1,0 +1,3 @@
+## UTXO Based Token Contracts
+
+The UTXO token contract is a standardized EOSIO smart contract which allows token transacting using only public-private key pairs without the need for an EOSIO account or system action. It is similar in feature to the Bitcoin transaction system. To move tokens in a UTXO based contract, an owner only needs the corresponding private key to the public key. A transaction fee is also paid to move the token. No account or EOSIO network interaction is required. The Decentral Bank network will develop and employ the UTXO based token contracts for its stable currency unit. 

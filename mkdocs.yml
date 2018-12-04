@@ -1,0 +1,11 @@
+site_name: Decentral Bank Documentation
+
+nav:
+    - Home: index.md
+    - Bonds: Bonds.md
+    - Seigniorage Shares: Seigniorage Shares.md
+    - Reserve: Reserve.md
+    - UTXO: UTXO Tokens.md
+    - Other Features: Other Features.md
+
+theme: readthedocs
