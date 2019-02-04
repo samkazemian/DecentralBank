@@ -34,22 +34,22 @@ void daemu::open( name owner, symbol_code symb, name ram_payer )
    //TODO: not sure if I can reuse one variable
    accounts stabl( _self, st.total_stablecoin.symbol.code().raw() );  
    accounts clatrl( _self, st.total_collateral.symbol.code().raw() );  
-   accounts vetos( _self, VETO_SYM.code().raw() );  
+   accounts vetos( _self, symbol("VETO", 4).code().raw() );  
 
    auto stablit = stabl.find( owner.value );
    if ( stablit == stabl.end() )
-      acnts.emplace( ram_payer, [&]( auto& a ) {
+      stabl.emplace( ram_payer, [&]( auto& a ) {
          a.balance = asset{ 0, st.total_stablecoin.symbol };
       });
    auto collaterit = clatrl.find( owner.value );
    if ( collaterit == clatrl.end() )
-      acnts.emplace( ram_payer, [&]( auto& a ) {
+      clatrl.emplace( ram_payer, [&]( auto& a ) {
          a.balance = asset{ 0, st.total_collateral.symbol };
       });
-   auto vetoit = vetos.find( VETO_SYM.code().raw() );
+   auto vetoit = vetos.find( symbol("VETO", 4).code().raw() );
    if ( vetoit == vetos.end() )
-      acnts.emplace( ram_payer, [&]( auto& a ) {
-         a.balance = asset{ 0, VETO_SYM };
+      vetos.emplace( ram_payer, [&]( auto& a ) {
+         a.balance = asset{ 0, symbol("VETO", 4) };
       });
 }
 
@@ -269,7 +269,7 @@ void daemu::vote( name voter, symbol_code symb,
                );
    eosio_assert( quantity.is_valid(), "invalid quantity" );
    eosio_assert( symb.is_valid(), "invalid symbol name" );
-   eosio_assert( quantity.symbol == VETO_SYM, 
+   eosio_assert( quantity.symbol == symbol("VETO", 4), 
                  "voting must occur in governance token"
                );
    
@@ -280,7 +280,7 @@ void daemu::vote( name voter, symbol_code symb,
    sub_balance( voter, quantity );
 
    accounts acnts( _self, symb.raw() );  
-   auto at = acnts.find( owner.value );
+   auto at = acnts.find( voter.value );
    if ( at == acnts.end() )
       acnts.emplace( voter, [&]( auto& a ) {
          //we know the symbol is VETO anyway
@@ -324,15 +324,15 @@ void daemu::propose( name proposer, symbol_code symb,
    //TODO: improve validation
    eosio_assert( //tau < MAX_INT && TODO: different max for 32 bit ints
                  //ttl < MAX_INT &&
-                 fee <= MAX_INT && 
-                 max <= MAX_INT && 
-                 liq <= MAX_INT && liq => 1000 //must be at least 100% collateralized
+                 fee < MAX_INT && 
+                 max < MAX_INT && 
+                 liq < MAX_INT && liq >= 1000 //must be at least 100% collateralized
                  //cannot be more than 100% of collateral, measured in 10ths of a %
-                 pen <= 1000, "bad input" 
+                 && pen <= 1000, "bad input" 
                );
    props propstable( _self, _self.value );
    auto prop_exist = propstable.find( symb.raw() );
-   eosio_assert( existing == propstable.end(), 
+   eosio_assert( prop_exist == propstable.end(), 
                  "proposal for this cdp type already exists"
                );
    /* scope into owner because self scope may already have this symbol
@@ -342,7 +342,7 @@ void daemu::propose( name proposer, symbol_code symb,
     */   
    stats statstable( _self, proposer.value ); 
    auto stat_exist = statstable.find( symb.raw() );
-   eosio_assert( existing == statstable.end(), 
+   eosio_assert( stat_exist == statstable.end(), 
                  "proposer already motioned for this cdp type"
                );
    statstable.emplace( proposer, [&]( auto& t ) {
@@ -362,8 +362,8 @@ void daemu::propose( name proposer, symbol_code symb,
       p.cdp_type = symb;
       p.proposer = proposer;
       p.expire = now() + VOTING_PERIOD;
-      p.vote_no = asset{ 0, VETO_SYM };
-      p.vote_yes = asset{ 0, VETO_SYM };
+      p.vote_no = asset{ 0, symbol("VETO", 4) };
+      p.vote_yes = asset{ 0, symbol("VETO", 4) };
    }); 
    eosio::transaction txn{};
    txn.actions.emplace_back(  eosio::permission_level{ proposer, "active"_n },
@@ -496,7 +496,7 @@ void daemu::close( name owner, symbol_code symb )
    auto it = acnts.get( owner.value,
                         "no balance object found"
                       );
-   eosio_assert( it->balance.amount == 0, 
+   eosio_assert( it.balance.amount == 0, 
                  "Cannot close because the balance is not zero." 
                );
    acnts.erase( it );
@@ -507,7 +507,7 @@ void daemu::close( name owner, symbol_code symb )
 //checking all transfers, and not only from EOS system token
 extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
       if (action == "transfer"_n.value && code != receiver) {
-         eosio::execute_action(eosio::name(receiver), eosio::name(code), &daemu::transfer);
+         eosio::execute_action(eosio::name(receiver), eosio::name(code), &eosio::daemu::transfer);
       }
       if (code == receiver) {
          switch (action) { 

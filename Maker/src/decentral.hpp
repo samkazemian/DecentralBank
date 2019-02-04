@@ -1,11 +1,13 @@
 /**
  *  @file
  *  @copyright defined in eos/LICENSE.txt
+ * https://github.com/liquidapps-io/eos-contracts-best-practices
  */
 #pragma once
 
 #include <eosiolib/asset.hpp>
 #include <eosiolib/eosio.hpp>
+#include <eosiolib/transaction.hpp>
 
 #include <string>
 
@@ -19,7 +21,6 @@ namespace eosio {
          using contract::contract;
          static constexpr int64_t  MAX_INT = (1LL << 62) - 1;
          static constexpr uint32_t VOTING_PERIOD = 604800; // seconds in a week
-         static constexpr symbol&  VETO_SYM = symbol{"VETO", 4}; // governance token
          
          /* Global settlement:
           * The system uses the market price of collateral 
@@ -144,7 +145,7 @@ namespace eosio {
             asset       vote_no;
             asset       vote_yes;
             
-            uint64_t    primary_key()const { return cdp_type.code().raw(); }
+            uint64_t    primary_key()const { return cdp_type.raw(); }
          };
 
 
@@ -179,7 +180,7 @@ namespace eosio {
 
             //CDT Type Symbol e.g...
             //DBEOS / DBKARMA...24*23*22*21*20 = over 5M different variants
-            uint64_t    primary_key()const { return cdp_symbol.raw(); }
+            uint64_t    primary_key()const { return cdp_type.raw(); }
          };
 
          //struct [[eosio::table]] auction {
