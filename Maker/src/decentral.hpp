@@ -1,7 +1,12 @@
 /**
- *  @file
- *  @copyright defined in eos/LICENSE.txt
- * https://github.com/liquidapps-io/eos-contracts-best-practices
+ *  @file 
+ *    contract header for CDP engine 
+ *  @copyright 
+ *    defined in DecentralBank/README.md
+ *  @author
+ *    richard tiutiun 
+ *  @reference
+ *    https://github.com/makerdao/dss/wiki
  */
 #pragma once
 
@@ -27,7 +32,7 @@ namespace eosio {
           * at the time of settlement to compute how much
           * collateral each user gets. 
          */ [[eosio::action]]
-            void settle(symbol_code symbol);
+            void settle( symbol_code symbol );
 
         /* Publish a proposal that either motions for the 
          * enactment of a new cdp type, or modification
@@ -36,9 +41,10 @@ namespace eosio {
             void propose( name proposer, symbol_code symb, 
                           name clatrl, symbol_code cltrl,
                           name stabl, symbol_code stbl,
-                          uint32_t tau, uint32_t ttl,
                           uint64_t max, uint64_t liq, 
-                          uint64_t pen, uint64_t fee );
+                          uint64_t pen, uint64_t fee,
+                          uint32_t tau, uint32_t ttl,
+                          uint64_t beg );
 
         /* Take a position (for/against) on a cdp proposal
          */ [[eosio::action]] 
@@ -54,15 +60,13 @@ namespace eosio {
          */ [[eosio::action]]  
             void referend( name proposer, symbol_code symb );
 
-         /* bid action 
-            *
-            * AND after t2 seconds have passed from placement of last bid
-            * THEN winning bidder may their collateral from the CDP 
-            * increasing bids are received up to cover the amount of outstanding stabletoken
-            * + accumulated interest (called the “stability fee”) and a liquidation fee 
-            * The Maker team told us they intend to add a short delay before auto-liquidation 
-            * 
-         */
+         /* liquify action 
+          * If the collateral value in a CDP drops below 150% of the outstanding Dai, 
+          * the contract automatically sells enough of your collateral to buy back as
+          * many Dai as you issued. The issued Dai is thus taken out of circulation. 
+         */ [[eosio::action]]
+            void liquify( name bidder, name owner, 
+                          symbol_code symb, asset bidamt );
          
          /* The owner of an urn can transfer
           * its ownership at any time using give.  
@@ -96,6 +100,10 @@ namespace eosio {
          */ [[eosio::action]]
             void shut( name owner, symbol_code symb );
 
+         //TODO: dummy action to substitute for price feed ORACLE
+         [[eosio::action]]
+         void upfeed( name ram_payer, symbol_code symb, bool down );
+
          [[eosio::action]]
          void transfer( name    from,
                         name    to,
@@ -117,75 +125,99 @@ namespace eosio {
 
       private:
 
-         struct [[eosio::table]] cdp 
+         struct [[eosio::table]] bid 
          {
-            //TODO: optimization...will calculate liq ratio less often
-            //asset   issued_so_far;
-            //asset   left_to_issue;
+            //SCOPE: cdp type symbol
+            name        owner; //cdp owner
+            name        bidder;
+            asset       bidamt;
             
+            uint32_t    started;
+            uint32_t    lastbid;
+            //symbol_code bid_type;
+
+            uint64_t primary_key()const { return owner.value; }
+         };
+         typedef eosio::multi_index< "bid"_n, bid > bids;
+
+         struct [[eosio::table]] cdp 
+         {         
             //SCOPE: cdp type symbol
             name     owner;
-            //account liquidator;
             //Amount of collateral currently locked by this CDP
             asset    collateral;
             //stablecoin issued
             asset    stablecoin;
-            //risk state one of ENUM (eg in liquidation, etc)
+            //in liquidation or not
             bool     live = true;
 
             uint64_t primary_key()const { return owner.value; }
          };
+         typedef eosio::multi_index< "cdp"_n, cdp > cdps;
 
-         struct [[eosio::table]] cdp_props 
+         struct [[eosio::table]] prop 
          {
-            symbol_code cdp_type;
             name        proposer;
-            uint32_t    expire;
-            
-            asset       vote_no;
+            symbol_code cdp_type;   
             asset       vote_yes;
+            asset       vote_no;
+            uint32_t    expire;
             
             uint64_t    primary_key()const { return cdp_type.raw(); }
          };
+         typedef eosio::multi_index< "prop"_n, prop > props;
 
-
-         struct [[eosio::table]] cdp_stats 
+         struct [[eosio::table]] stat 
          {   
+            uint64_t    beg; //minimum bid increase
             //auctions will terminate after tau seconds have passed from start
             uint32_t    tau;
             //and after ttl seconds have passed since placement of last bid
             uint32_t    ttl;
             
+            //CDT Type Symbol e.g...
+            //DBEOS / DBKARMA...24*23*22*21*20 = over 5M different variants
             symbol_code cdp_type;   
             //max total stablecoin issuable by all CDPs of this type
             uint64_t    debt_ceiling;
-            //TODO: paid when?
-            uint64_t    stability_fee;
+            
             //by default, 13% of the collateral in the CDP 
             uint64_t    penalty_ratio; //units are tenths of a %
             //collateral asset units needed per issued stable tokens
-            uint64_t    liquidation_ratio;
+            uint64_t    liquid8_ratio; //units are tenths of a %
             
-            //asset  fee_balance;
             //Total debt owed by CDPs of this type, denominated in debt unit
+            asset       fee_balance;
+            asset       stability_fee; //units are tenths of a %
+            
             asset       total_stablecoin;
             //Symbol and amount used as collateral for all CDPs of this type
             asset       total_collateral;
 
+            //TODO: 
+            // uint64_t    global_debt_ceiling
+            //Short delay before the auto-liquidation commences
+            // uint32_t delay;
+            //Instead of these two names use extended assets for the totals
             name        stabl_contract; //account name of eosio.token for stablecoin
             name        clatrl_contract; //account name of eosio.token for collateral
 
             bool        live = false;
-            uint64_t    usd_per_clatrl = 0;
-
-            //CDT Type Symbol e.g...
-            //DBEOS / DBKARMA...24*23*22*21*20 = over 5M different variants
+            uint32_t    last_veto = 0; //for parameter updates
+            
             uint64_t    primary_key()const { return cdp_type.raw(); }
          };
+         typedef eosio::multi_index< "stat"_n, stat > stats;
+         
+         struct [[eosio::table]] feed
+         {
+            symbol_code symb;
+            uint64_t usd_per;
+            uint32_t lastamp;
 
-         //struct [[eosio::table]] auction {
-            //TODO: data model to incorporate both sides of auction in one struct
-         //}
+            uint64_t primary_key() const { return symb.raw(); }
+         };
+         typedef eosio::multi_index< "feed"_n, feed > feeds;
 
          // User's balance of stablecoin
          struct [[eosio::table]] account 
@@ -194,12 +226,7 @@ namespace eosio {
             name     owner;
                
             uint64_t primary_key() const { return owner.value; }
-         };
-
-
-         typedef eosio::multi_index< "cdp"_n, cdp > cdps;
-         typedef eosio::multi_index< "stat"_n, cdp_stats > stats;
-         typedef eosio::multi_index< "prop"_n, cdp_props > props;
+         };      
          typedef eosio::multi_index< "accounts"_n, account > accounts;
 
          void sub_balance( name owner, asset value );

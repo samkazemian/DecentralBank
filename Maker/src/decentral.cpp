@@ -1,6 +1,10 @@
 /**
  *  @file
- *  @copyright defined in eos/LICENSE.txt
+ *    contract implementation for CDP engine
+ *  @copyright 
+ *    defined in DecentralBank/README.md
+ *  @author
+ *    richard tiutiun 
  */
 
 #define DEBUG
@@ -31,10 +35,10 @@ void daemu::open( name owner, symbol_code symb, name ram_payer )
       p.stablecoin = asset{ 0, st.total_stablecoin.symbol };
    }); 
 
-   //TODO: not sure if I can reuse one variable
+   //TODO: refactor...not sure if I can reuse one variable
    accounts stabl( _self, st.total_stablecoin.symbol.code().raw() );  
    accounts clatrl( _self, st.total_collateral.symbol.code().raw() );  
-   accounts vetos( _self, symbol("VETO", 4).code().raw() );  
+   accounts vetos( _self, symbol("VTO", 4).code().raw() );  
 
    auto stablit = stabl.find( owner.value );
    if ( stablit == stabl.end() )
@@ -46,10 +50,10 @@ void daemu::open( name owner, symbol_code symb, name ram_payer )
       clatrl.emplace( ram_payer, [&]( auto& a ) {
          a.balance = asset{ 0, st.total_collateral.symbol };
       });
-   auto vetoit = vetos.find( symbol("VETO", 4).code().raw() );
+   auto vetoit = vetos.find( symbol("VTO", 4).code().raw() );
    if ( vetoit == vetos.end() )
       vetos.emplace( ram_payer, [&]( auto& a ) {
-         a.balance = asset{ 0, symbol("VETO", 4) };
+         a.balance = asset{ 0, symbol("VTO", 4) };
       });
 }
 
@@ -85,6 +89,9 @@ void daemu::bail( name owner, symbol_code symb, asset quantity )
    const auto& st = statstable.get( symb.raw(),
                                     "cdp type doesn't exist" 
                                   );
+   // eosio_assert( st.last_update >= now() - 2,
+   //                "collateral usd price stale"
+   //             ); 
    eosio_assert( quantity.symbol == st.total_collateral.symbol, 
                  "cdp type + collateral symbol mismatch" 
                );
@@ -93,13 +100,17 @@ void daemu::bail( name owner, symbol_code symb, asset quantity )
                             "cdp type + owner mismatch" 
                           );
    eosio_assert( it.live != false, "cdp is in liquidation" );
-   eosio_assert( it.collateral.amount >= quantity.amount,
-                 "can't free more collateral than held" 
+   eosio_assert( it.collateral.amount > quantity.amount,
+                 "can't free this much collateral" 
                );
+   feeds feedstable( _self, _self.value );
+   const auto& ft = feedstable.get( it.collateral.symbol.raw(), 
+                                    "no price data" 
+                                  );
    uint64_t amt = it.collateral.amount - quantity.amount;
-   amt *= st.usd_per_clatrl / it.stablecoin.amount;  
+   amt *= ft.usd_per / it.stablecoin.amount; //TODO: divide by zero
 
-   eosio_assert( amt >= st.liquidation_ratio, 
+   eosio_assert( amt >= st.liquid8_ratio, 
                  "can't go below liquidation ratio" 
                );
    add_balance( owner, quantity ); //increase the owner's collateral balance
@@ -124,6 +135,9 @@ void daemu::draw( name owner, symbol_code symb, asset quantity )
    const auto& st = statstable.get( symb.raw(),
                                     "cdp type doesn't exist" 
                                   );
+   // eosio_assert( st.last_update >= now() - 2,
+   //                "collateral usd price stale"
+   //             );
    eosio_assert( quantity.symbol == st.total_stablecoin.symbol, 
                  "cdp type + stablecoin symbol mismatch" 
                );
@@ -133,12 +147,16 @@ void daemu::draw( name owner, symbol_code symb, asset quantity )
                                  );
    eosio_assert( it.live != false, "cdp is in liquidation" );
    
-   uint64_t amt = it.stablecoin.amount + quantity.amount;  
+   uint64_t amt = it.stablecoin.amount + quantity.amount; 
    eosio_assert( st.debt_ceiling >= amt, 
                  "can't go above debt ceiling" 
                );
-   uint64_t liq = (it.collateral.amount) * st.usd_per_clatrl / amt;
-   eosio_assert( liq >= st.liquidation_ratio, 
+   feeds feedstable( _self, _self.value );
+   const auto& ft = feedstable.get( it.collateral.symbol.raw(), 
+                                    "no price data" 
+                                  );
+   uint64_t liq = it.collateral.amount * ft.usd_per / amt;
+   eosio_assert( liq >= st.liquid8_ratio, 
                  "can't go below liquidation ratio" 
                );
    add_balance( owner, quantity );
@@ -164,15 +182,15 @@ void daemu::wipe( name owner, symbol_code symb, asset quantity )
                                     "cdp type does not exist" 
                                   );
    eosio_assert( quantity.symbol == st.total_stablecoin.symbol, 
-                 "cdp type + stablecoin symbol mismatch"  
+                 "(cdp type, symbol) mismatch"  
                );
    cdps cdpstable( _self, symb.raw() );
    const auto& it = cdpstable.get( owner.value, 
-                                   "cdp type + owner mismatch" 
+                                   "(cdp type, owner) mismatch" 
                                  );
    eosio_assert( it.live != false, "cdp in liquidation" );
-   eosio_assert( it.stablecoin.amount >= quantity.amount,
-                 "can't wipe above outstanding balance" 
+   eosio_assert( it.stablecoin.amount > quantity.amount,
+                 "can't wipe this much" 
                );
    sub_balance( owner, quantity );
    
@@ -204,7 +222,7 @@ void daemu::lock( name owner, symbol_code symb, asset quantity )
                );
    cdps cdpstable( _self, symb.raw() );
    const auto& it = cdpstable.get( owner.value, 
-                                   "cdp type + owner mistmatch" 
+                                   "this cdp doesn't exist" 
                                  );
    eosio_assert( it.live != false, "cdp in liquidation" );
    sub_balance( owner, quantity );
@@ -227,14 +245,17 @@ void daemu::shut( name owner, symbol_code symb )
                                   );
    cdps cdpstable( _self, symb.raw() );
    const auto& it = cdpstable.get( owner.value, 
-                                   "cdp type + owner mistmatch" 
+                                   "this cdp doesn't exist" 
                                  );
    eosio_assert( it.live != false, "cdp in liquidation" );
-   
+   //TODO: grows over time?
+   //do on every bail, pro rata
+   sub_balance( owner, st.stability_fee); 
    sub_balance( owner, it.stablecoin ); 
    add_balance( owner, it.collateral );
    //TODO: increment cdp type fee
    statstable.modify( st, same_payer, [&]( auto& t ) { 
+      //t.fee_balance += stability fee;
       t.total_collateral -= it.collateral; 
       t.total_stablecoin -= it.stablecoin;
    });
@@ -248,10 +269,17 @@ void daemu::settle( symbol_code symb )
    const auto& st = statstable.get( symb.raw(), 
                                     "cdp type doesn't exist" 
                                   );
-   uint64_t liq = st.total_collateral.amount * st.usd_per_clatrl;
+   // eosio_assert( st.last_update >= now() - 2,
+   //                "collateral usd price stale"
+   //             );
+   feeds feedstable( _self, _self.value );
+   const auto& ft = feedstable.get( st.total_collateral.symbol.raw(), 
+                                    "no price data" 
+                                  );
+   uint64_t liq = st.total_collateral.amount * ft.usd_per;
    liq /= st.total_stablecoin.amount;
 
-   if ( st.liquidation_ratio > liq )                                  
+   if ( st.liquid8_ratio > liq )                                  
       statstable.modify( st, same_payer, [&]( auto& t ) { 
          t.live = false; 
       });
@@ -259,20 +287,35 @@ void daemu::settle( symbol_code symb )
       statstable.modify( st, same_payer, [&]( auto& t ) { 
          t.live = true; 
       });
+   
+   // TODO: vote to settle a type even above conditions are not met
+   // propstable.emplace( proposer, [&]( auto& p ) {
+   //    p.cdp_type = symb;
+   //    p.proposer = proposer;
+   //    p.expire = now() + VOTING_PERIOD;
+   //    p.vote_no = asset(0, symbol("VETO", 4));
+   //    p.vote_yes = asset(0, symbol("VETO", 4));
+   // }); 
+
+   //TODO: to refund collateral to everyone who is holding a cdp type 
+   //that is in global settlement
+   //
+   //SEND_INLINE_ACTION( *this, transfer, { {st.issuer, "active"_n} },
+   //                                     { st.issuer, to, quantity, memo }
+   //                  );
 }
 
 void daemu::vote( name voter, symbol_code symb, 
                   bool against, asset quantity ) {  
    require_auth( voter );
-   eosio_assert( quantity.amount > 0, 
-                 "must use positive quantity" 
-               );
-   eosio_assert( quantity.is_valid(), "invalid quantity" );
+  
    eosio_assert( symb.is_valid(), "invalid symbol name" );
-   eosio_assert( quantity.symbol == symbol("VETO", 4), 
-                 "voting must occur in governance token"
+   eosio_assert( quantity.is_valid() && quantity.amount > 0, 
+                 "invalid quantity" 
                );
-   
+   eosio_assert( quantity.symbol == symbol("VETO", 4), 
+                 "must vote with governance token"
+               );
    props propstable( _self, _self.value );
    const auto& pt = propstable.get( symb.raw(), 
                                     "cdp type not proposed" 
@@ -286,11 +329,11 @@ void daemu::vote( name voter, symbol_code symb,
          //we know the symbol is VETO anyway
          //so instead keep track of prop symbol
          a.owner = voter;
-         a.balance = asset{ 0, symbol( symb, 4 ) }; 
+         a.balance = asset(0, symbol( symb, 4 )); 
       });
    else
       acnts.modify( at, same_payer, [&]( auto& a ) {
-         a.balance += asset{ quantity.amount, symbol( symb, 4 ) };
+         a.balance += asset(quantity.amount, symbol( symb, 4 ));
       });
    if (against)
       propstable.modify( pt, same_payer, [&]( auto& p ) { 
@@ -302,12 +345,134 @@ void daemu::vote( name voter, symbol_code symb,
       });
 }
 
+void daemu::liquify( name bidder, name owner, 
+                     symbol_code symb, asset bidamt ) {
+
+   require_auth( bidder );
+   eosio_assert( symb.is_valid(),
+                 "invalid cdp type symbol name" 
+               );
+   eosio_assert( bidamt.is_valid() && bidamt.amount > 0,
+                 "bid is invalid" 
+               );
+   stats statstable( _self, _self.value );
+   const auto& st = statstable.get( symb.raw(), 
+                                    "cdp type doesn't exist" 
+                                  );
+   cdps cdpstable( _self, symb.raw() );
+   const auto& it = cdpstable.get( owner.value, 
+                                   "this cdp doesn't exist" 
+                                 );
+   if ( it.live ) {
+      feeds feedstable( _self, _self.value );
+      const auto& ft = feedstable.get( it.collateral.symbol.raw(), 
+                                       "no price data" 
+                                     );
+      uint64_t liq = it.collateral.amount * ft.usd_per;
+      liq /= it.stablecoin.amount;
+      eosio_assert( liq > st.liquid8_ratio,
+                    "must exceed liquidation ratio" 
+                  );
+      eosio_assert( bidamt.symbol == it.stablecoin.symbol, 
+                    "bid is of wrong symbol" 
+                  );
+      eosio_assert( bidamt.amount > 0,
+                    "bid must be > 0" 
+                  );
+      cdpstable.modify( it, bidder, [&]( auto& p ) { //liquidators get the RAM
+         p.live = false; 
+         p.stablecoin -= bidamt;
+      });
+   } 
+   bids bidstable( _self, symb.raw() );
+   auto bt = bidstable.find( owner.value );
+   
+   if ( bt == bidstable.end() ) {
+      eosio_assert( bidamt.symbol == st.total_stablecoin.symbol, 
+                     "bid in wrong symbol" 
+                  );
+      sub_balance( bidder, bidamt );
+      bidstable.emplace( bidder, [&]( auto& b ) {
+         b.owner = owner;         
+         b.bidder = bidder;
+         b.bidamt = bidamt;
+         b.started = now();
+         b.lastbid = now();
+      }); 
+      //decrement from cdp dai balance
+   } else if ( st.tau > now() - bt->started &&
+               st.ttl > now() - bt->lastbid ) {
+      eosio_assert( bidamt.symbol == bt->bidamt.symbol,
+                    "bid in wrong symbol" 
+                  );
+      eosio_assert( (1 + st.beg) * bt->bidamt.amount <= bidamt.amount,  
+                    "bid too small"
+                  ); 
+      //if ( it.stablecoin >= bidamt ) {
+         sub_balance( bidder, bidamt );
+         add_balance( bt->bidder, bt->bidamt ); 
+         //subtract difference between bids cdp balance      
+         cdpstable.modify( it, bidder, [&]( auto& p ) { 
+            p.stablecoin -= ( bidamt - bt->bidamt );
+         });
+         bidstable.modify( bt, bidder, [&]( auto& b ) { 
+            b.bidder = bidder;
+            b.bidamt = bidamt;
+            b.lastbid = now();
+         });   
+         //if it was a maker bid
+      //}
+      
+   } else {
+      if ( it.collateral.amount ) {
+         add_balance( bt->bidder, it.collateral );
+         cdpstable.modify( it, same_payer, [&]( auto& p ) {  
+            p.collateral -= p.collateral;
+         });
+      } 
+      if ( !it.stablecoin.amount ) {
+         bidstable.erase(bt);
+         cdpstable.erase(it);
+      }
+      else {
+         feeds feedstable( _self, _self.value );
+         const auto& ft = feedstable.get( symbol("VTO", 4).raw(), 
+                                          "no price data" 
+                                        );
+         if ( it.stablecoin.amount > 0 ) {
+            uint64_t amt = it.stablecoin.amount / ft.usd_per;
+            cdpstable.modify( it, same_payer, [&]( auto& p ) {  
+               p.collateral = asset( amt, symbol("VTO", 4) );
+            });   
+         } 
+         else if ( it.stablecoin.amount < 0 ) {
+            asset stamt = -it.stablecoin;
+            uint64_t amt = stamt.amount / ft.usd_per;
+            cdpstable.modify( it, same_payer, [&]( auto& p ) {  
+               p.collateral = stamt;
+               p.stablecoin = asset(amt, symbol("VTO", 4) );
+            });
+         }
+         eosio_assert( bidamt.symbol == it.stablecoin.symbol, 
+                       "bid is of wrong symbol" 
+                     );
+         bidstable.modify( bt, bidder, [&]( auto& b ) { 
+            b.bidder = bidder;
+            b.bidamt = bidamt;
+            b.started = now();
+            b.lastbid = now();
+         });
+      }
+   }
+}
+
 void daemu::propose( name proposer, symbol_code symb, 
                      name clatrl, symbol_code cltrl,
                      name stabl, symbol_code stbl,
-                     uint32_t tau, uint32_t ttl,
                      uint64_t max, uint64_t liq, 
-                     uint64_t pen, uint64_t fee ) {  
+                     uint64_t pen, uint64_t fee, 
+                     uint32_t tau, uint32_t ttl,
+                     uint64_t beg ) {  
    
    require_auth( proposer );
    is_account( clatrl ); 
@@ -319,7 +484,7 @@ void daemu::propose( name proposer, symbol_code symb,
                  "invalid collateral symbol name" 
                );
    eosio_assert( stbl.is_valid(), 
-                 "invalid symbol name" 
+                 "invalid stablecoin symbol name" 
                );
    //TODO: improve validation
    eosio_assert( //tau < MAX_INT && TODO: different max for 32 bit ints
@@ -333,7 +498,7 @@ void daemu::propose( name proposer, symbol_code symb,
    props propstable( _self, _self.value );
    auto prop_exist = propstable.find( symb.raw() );
    eosio_assert( prop_exist == propstable.end(), 
-                 "proposal for this cdp type already exists"
+                 "proposal for this cdp type exists"
                );
    /* scope into owner because self scope may already have this symbol
     * if symbol exists in self scope and this proposal is voted into live
@@ -343,18 +508,20 @@ void daemu::propose( name proposer, symbol_code symb,
    stats statstable( _self, proposer.value ); 
    auto stat_exist = statstable.find( symb.raw() );
    eosio_assert( stat_exist == statstable.end(), 
-                 "proposer already motioned for this cdp type"
+                 "proposer already claimed this cdp type"
                );
    statstable.emplace( proposer, [&]( auto& t ) {
       t.tau = tau;
       t.ttl = ttl;
+      t.beg = beg;
       t.cdp_type = symb;
       t.debt_ceiling = max;
-      t.stability_fee = fee;
       t.penalty_ratio = pen;
-      t.liquidation_ratio = liq;
-      t.total_stablecoin = asset{ 0, symbol( stbl, 4 ) };
-      t.total_collateral = asset{ 0, symbol( cltrl, 4 ) };
+      t.liquid8_ratio = liq;
+      t.fee_balance = asset( 0, symbol("VETO", 4));
+      t.stability_fee = asset(fee, symbol("VETO", 4));
+      t.total_stablecoin = asset(0, symbol(stbl, 4 ));
+      t.total_collateral = asset(0, symbol(cltrl, 4 ));
       t.stabl_contract = stabl;
       t.clatrl_contract = clatrl;
    });
@@ -362,8 +529,8 @@ void daemu::propose( name proposer, symbol_code symb,
       p.cdp_type = symb;
       p.proposer = proposer;
       p.expire = now() + VOTING_PERIOD;
-      p.vote_no = asset{ 0, symbol("VETO", 4) };
-      p.vote_yes = asset{ 0, symbol("VETO", 4) };
+      p.vote_no = asset(0, symbol("VTO", 4));
+      p.vote_yes = asset(0, symbol("VTO", 4));
    }); 
    eosio::transaction txn{};
    txn.actions.emplace_back(  eosio::permission_level{ proposer, "active"_n },
@@ -372,7 +539,6 @@ void daemu::propose( name proposer, symbol_code symb,
                            ); txn.delay_sec = VOTING_PERIOD;
    
    uint128_t txid = (((uint128_t) symb.raw()) << 32) + proposer.value;
-   //cancel_deferred(txid); TODO: will ever need?
    txn.send(txid, proposer, false); 
 }
 
@@ -397,11 +563,13 @@ void daemu::referend( name proposer, symbol_code symb )
             t.live = true;
             t.tau = pst.tau;
             t.ttl = pst.ttl;
+            t.beg = pst.beg;
+            t.last_veto = now();
             t.cdp_type = pst.cdp_type;
             t.debt_ceiling = pst.debt_ceiling;
             t.stability_fee = pst.stability_fee;
             t.penalty_ratio = pst.penalty_ratio;
-            t.liquidation_ratio = pst.liquidation_ratio;
+            t.liquid8_ratio = pst.liquid8_ratio;
             t.total_stablecoin = pst.total_stablecoin;
             t.total_collateral = pst.total_collateral;
             t.stabl_contract = pst.stabl_contract;
@@ -412,38 +580,61 @@ void daemu::referend( name proposer, symbol_code symb )
             t.live = true;
             t.tau = pst.tau;
             t.ttl = pst.ttl;
+            t.beg = pst.beg;
+            t.last_veto = now();
             t.debt_ceiling = pst.debt_ceiling;
             t.stability_fee = pst.stability_fee;
             t.penalty_ratio = pst.penalty_ratio;
-            t.liquidation_ratio = pst.liquidation_ratio;
+            t.liquid8_ratio = pst.liquid8_ratio;
          });
+   } else if ( prop.vote_yes > prop.vote_no ) { //vote tie, so revote
+      eosio::transaction txn{};
+      txn.actions.emplace_back(  eosio::permission_level{ proposer, "active"_n },
+                                 _self, "referend"_n,
+                                 std::make_tuple(proposer, symb)
+                              ); txn.delay_sec = VOTING_PERIOD;
+      
+      uint128_t txid = (((uint128_t) symb.raw()) << 32) + proposer.value;
+      txn.send(txid, proposer, false); 
+   } else {
+      //now we refund everyone who voted with their VETO tokens
+      accounts vacnts( _self, symb.raw() );
+      for ( auto it = vacnts.begin(); it != vacnts.end(); ++it ) {
+         add_balance( it->owner, asset( it->balance.amount, symbol("VTO", 4 )) );   
+         vacnts.erase( it );
+      }
+      //now we can safely erase the proposal
+      pstable.erase( pst );
+      propstable.erase( prop );
    }
-   //now we refund everyone who voted with their VETO tokens
-   accounts vacnts( _self, symb.raw() );
-   for ( auto it = vacnts.begin(); it != vacnts.end(); ++it ) {
-      add_balance( it->owner, asset( it->balance.amount, symbol( "VETO", 4 ) ) );   
-      vacnts.erase( it );
-   }
-   //now we can safely erase the proposal
-   pstable.erase( pst );
-   propstable.erase( prop );
 }
 
-//void daemu::bid(name owner, const symbol& symbol) 
-//{   require_auth(owner);
-   /* TODO:
-      * If the collateral value in a CDP drops below 150% of the outstanding Dai, 
-      * the contract automatically sells enough of your collateral to buy back as
-      * many Dai as you issued. The issued Dai is thus taken out of circulation.
-   */
-//}
+//TODO: replace
+void daemu::upfeed( name ram_payer, symbol_code symb, bool down ) 
+{  require_auth( ram_payer );
 
-//TODO: to refund everyone who is holding a cdp type that is in global settlement
-//
+   feeds feedstable( _self, _self.value );
+   auto fit = feedstable.find( symb.raw() );
+   if ( fit == feedstable.end() ) {
+      feedstable.emplace( ram_payer, [&]( auto& f ) {
+         f.symb = symb;
+         f.usd_per = 420;
+         f.lastamp = now();
+      }); 
+   } else {
+      if (down)
+         feedstable.modify( fit, same_payer, [&]( auto& f ) {
+            f.usd_per = 42;
+            f.lastamp = now();
+         });
+      else
+         feedstable.modify( fit, same_payer, [&]( auto& f ) {
+            f.usd_per = 442;
+            f.lastamp = now();
+         });
+   }
+}
 
-//SEND_INLINE_ACTION( *this, transfer, { {st.issuer, "active"_n} },
-//                                     { st.issuer, to, quantity, memo }
-//                  );
 void daemu::transfer( name    from,
                       name    to,
                       asset   quantity,
@@ -468,7 +659,7 @@ void daemu::transfer( name    from,
 }
 
 void daemu::sub_balance( name owner, asset value ) 
-{  accounts from_acnts( _self, value.symbol.code().raw() );
+{  accounts from_acnts( _self, value.symbol.raw() );
    const auto& from = from_acnts.get( owner.value, 
                                       "no balance object found" 
                                     );
@@ -481,7 +672,7 @@ void daemu::sub_balance( name owner, asset value )
 }
 
 void daemu::add_balance( name owner, asset value ) 
-{  accounts to_acnts( _self, value.symbol.code().raw() );
+{  accounts to_acnts( _self, value.symbol.raw() );
    const auto& to = to_acnts.get( owner.value, 
                                   "no balance object found" 
                                 );
@@ -511,7 +702,7 @@ extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
       }
       if (code == receiver) {
          switch (action) { 
-               EOSIO_DISPATCH_HELPER(eosio::daemu, (open)(close)(shut)(give)(lock)(bail)(draw)(wipe)(settle)(vote)(propose)(referend)) 
+               EOSIO_DISPATCH_HELPER(eosio::daemu, (open)(close)(shut)(give)(lock)(bail)(draw)(wipe)(settle)(vote)(propose)(referend)(liquify)(upfeed)) 
          }    
       }
 }
