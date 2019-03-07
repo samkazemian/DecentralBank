@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: ./startup.sh
+# Usage: ./testlocal.sh
 
 # Assumptions: nodeos already running
 # Otherwise, run nodeos with command:
@@ -15,7 +15,7 @@ COMPILE="./compile.sh"
 DEPLOY="./deploy.sh"
 
 # Contract accounts
-CONTRACT="daemu"
+CONTRACT="daiq"
 
 # Wallet name prereq... 
 # set WALLET environment variable via: 
@@ -60,25 +60,25 @@ cleos wallet import -n $WALLET --private-key $OWNER_ACCT
 cleos wallet import -n $WALLET --private-key $ACTIVE_ACCT
 
 # 0) Unlock wallet
-echo "===UNLOCKING WALLET==="
+echo "=== UNLOCKING WALLET ==="
 cleos wallet unlock -n $WALLET --password $PASSWORD
 
 # 1) Create contract accounts
-echo "===CREATING CONTRACT ACCOUNTS==="
+echo "=== CREATING CONTRACT ACCOUNTS ==="
 cleos create account eosio $CONTRACT $OWNER_KEY $ACTIVE_KEY
 
 # 2) Create test accounts
-echo "===CREATING USER ACCOUNTS==="
+echo "=== CREATING USER ACCOUNTS ==="
 cleos create account eosio rick $OWNER_KEY $ACTIVE_KEY
 cleos create account eosio dick $OWNER_KEY $ACTIVE_KEY
 
 # 3) Compile and Deploy contracts
-echo "===COMPILING CONTRACTS==="
+echo "=== COMPILING CONTRACTS ==="
 "$COMPILE" $CONTRACT
-echo "===DEPLOYING CONTRACTS==="
+echo "=== DEPLOYING CONTRACTS ==="
 "$DEPLOY" $CONTRACT
 
-# 4) Set up permissions for contracts to send inline actions
+# 4) Set up permissions for contracts to send deferred actions
 echo "===SETTING PERMISSIONS==="
 cleos set account permission $CONTRACT active ./perm.json -p $CONTRACT@active
 
@@ -111,7 +111,10 @@ cleos get table $CONTRACT "FUD" cdp
 # PROPOSE
 echo "=== Proposing new CDP type  ==="
 
-cleos push action $CONTRACT propose '["rick", "FUD", "EOS", "USD", 2000, 20000000, 50, 100, 30, 5, 0.20, 1.5]' -p rick
+cleos push action $CONTRACT propose '["rick", "FUD", "EOS", "USD", 2000, 2000000000, 1, 1, 30, 5, 0.20, 1.5]' -p rick
+
+#propose global settlement 
+#cleos push action $CONTRACT propose '["rick", "FUD", "EOS", "USD", 0, 0, 0, 0, 0, 0, 0, 0]' -p rick
 
 # verify that stats have temporary entry for storing rick's proposed cdp type
 cleos get table $CONTRACT rick stat
@@ -134,7 +137,7 @@ echo "=== Waiting for referendum... ==="
 sleep 10
 
 # or call referended manually...
-#cleos push action $CONTRACT referended '["rick", "FUD"]' -p daemu
+#cleos push action $CONTRACT referended '["rick", "FUD"]' -p daiq
 
 # for tie
 #cleos push action $CONTRACT vote '["rick", "FUD", true, "0.0002 VTO" ]' -p rick
@@ -168,13 +171,11 @@ cleos get table $CONTRACT "FUD" cdp
 
 #=================================================================================#
 # CREATE PRICE FEEDS
-echo "=== Make price go up ==="
+echo "=== Creating price feeds ==="
 
-cleos push action $CONTRACT upfeed '["EOS", false]' -p daemu
-# create price feed for VTO and FUD (1:1)
-echo "=== Init a price feed for VTO ==="
-cleos push action $CONTRACT upfeed '["VTO", false]' -p daemu
-cleos push action $CONTRACT upfeed '["USD", false]' -p daemu
+cleos push action $CONTRACT upfeed '["EOS"]' -f -p daiq
+cleos push action $CONTRACT upfeed '["VTO"]' -f -p daiq
+cleos push action $CONTRACT upfeed '["USD"]' -f -p daiq
 
 # verify that price was updated
 cleos get table $CONTRACT $CONTRACT feed
@@ -225,9 +226,9 @@ cleos get table $CONTRACT "EOS" accounts
 
 #=================================================================================#
 # UPDATE EOS PRICE FEED - DOWN
-echo "=== First, make price go down ==="
+echo "=== Make EOS price go down ==="
 
-cleos push action $CONTRACT upfeed '["EOS", true]' -p daemu
+cleos push action $CONTRACT upfeed '["EOS"]' -f -p daiq
 
 #=================================================================================#
 # LIQUIFY
@@ -283,8 +284,11 @@ cleos get table $CONTRACT "VTO" accounts
 
 #=================================================================================#
 # SETTLE
-# echo "=== Global settlement ==="
+echo "=== Global settlement ==="
 
+cleos push action $CONTRACT settle '["FUD"]' -p daiq
+#verify that FUD cdp type is not live
+cleos get table $CONTRACT $CONTRACT stat
 
 # Exit on success
 exit 0

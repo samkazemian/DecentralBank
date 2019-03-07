@@ -1,44 +1,37 @@
 
-# Future note: some of the information herein should be apt for 
-# reorganization into the relevant ricardian clauses of the contract ABI
+###### Future note: some of the information herein should be apt for re-organization into the relevant Ricardian clauses of the DaIQ contract ABI
 
-If you'd like your cdp to dip below the agreed upon liqidation ratio
-of your cdp's type, via one of the relevant actions (draw or bail),
-then TOO BAD because you won't be permitted (you'll hit an assertion).
+# Design Decisions 
 
-If you'd like to liquidate your own CDP in the event of significant price slippage,
-then TOO BAD because that would let you print free money and we won't have that kind
-of behavior here (unless you collude with another account).
+* If you'd like your CDP to dip below the agreed upon liqidation ratio of your CDP's type, via one of the relevant actions (draw or bail), then TOO BAD because you won't be permitted (you'll hit an assertion).
+* If you'd like to liquidate your own CDP in the event of significant price slippage, then TOO BAD because that would let you print free money and we won't have that kind of behavior here (unless you collude with another account).
 
-# Differences between CDPeos and CDPether (aka MakerDAO)
+# Differences between cdpEOS (aka DaIQ) and cdpETH (aka MakerDAO)
+
+DaIQ successfully implements multi-collateral CDPs by accepting any eosio.token, and the entire protocol is implemented in less than 800 SLOC. 
 
 The major discrepancy between the two protocols is in how
-liquidation auctions are handled. We make add the constraint
-where the owner of a cdp cannot liquify their own cdp.
+liquidation auctions, stability fees, and governance are handled. For instance, we enforce a constraint where the owner of a CDP cannot liquify their own CDP.
 
-To provide for better liquidity, Maker uses a simultaneous (parallel) 
-auctions of four types:
+To provide for better liquidity, Maker uses simultaneous (parallel) auctions of four types:
 
-#1 Dai (stable token) bids for collateral
-#2 Reverse dutch of the above (collateral bids for dai) in the event of 
-#3 Dai bids for Maker (voting token) in the event of balance shortage in #1 (not enough Dai was raised)
-#4 Maker bids for Dai in the event of balance surplus in #1 (too much Dai was raised) 
+* #1 Dai (stable token) bids for collateral
+* #2 Reverse dutch of the above (collateral bids for Dai) in the event of some collateral remaining to be refunded to a CDP owner.
+* #3 Dai bids for MKR (voting token) in the event of balance shortage in #1 (not enough Dai was raised)
+* #4 MKR bids for Dai in the event of balance surplus in #1 (too much Dai was raised) 
 
-#2 is omitted entirely from our protocol and the rest of the phases are 
-execute in sequence rather than in parallel. Unlike in Ethereum where the primary constraint is 
-speed and gas, the main constraint in EOS is RAM so our approach was taken from an angle of more space
-efficient implementation, and a simpler view overall. 
+Auction #2 is omitted entirely from our protocol: we do not endorse it because CDP owners should be playing it safe and overcollateralizing even more. The rest of the phases are executed in sequence rather than in parallel. 
 
-On that last note, we also omit the calculation of stability fees on an APR basis on favor of a fixed percentage fee
-upon every draw action executed on a cdp. Moreover, our voting and referendum procedure has a common sense nature.
-Any account may create a proposal, and as many varying proposals as desired,
-but we do constrain proposals per CDP type. Only one proposal may be active (in voting) per CDP type (new or modification of existing).
+Unlike in Ethereum where the primary constraint is speed and gas, with faster block times the main constraint in EOS is RAM so our approach was taken from the angle of a more space efficient implementation, and a simpler view of the computation overall. 
+
+On that last note, we also omit the calculation of stability fees on an APR basis on favor of a fixed percentage fee upon every draw action executed on a CDP. Moreover, our voting and referendum procedure has a common sense nature.
+
+Any account may create a proposal, and as many varying proposals as desired, but we do constrain proposals per CDP type. Only one proposal may be active (in voting) per CDP type (new or modification of existing).
+
 Voters may vote with their tokens as much as they please (a la Maker) and even post two postions simultaneously (both for and against).
 
-All voting tokens are refunded to voters upon the expiration of the voting period for a proposal, and if there is a tie between total 
-for and against positions, another voting period is schedule to take place immediately.
-Global settlement is subjected to popular vote like any CDP change or creation proposal, rather than designated 
-to a select group of Keepers as in MakerDAO.
+All voting tokens are refunded to voters upon the expiration of the voting period for a proposal, and if there is a tie between total for and against positions, another voting period is scheduled to take place immediately.
 
-Global constants are the designated accounts that provide price feeds, the voting period of 2 weeks for proposals, and the minimum 
-age of 5 minutes (how recent) for price data that is considered acceptable. 
+Global settlement is subjected to popular vote like any CDP change or creation proposal, rather than designated to a select group of Keepers as in MakerDAO.
+
+Global constants are the designated accounts that provide price feeds, the voting period of 2 weeks for proposals, and the minimum age of 5 minutes (how recent) for price data that is considered acceptable. 

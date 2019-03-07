@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Wed Mar  6 14:01:32 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu Mar  7 15:44:42 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -25,7 +25,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "symb",
+                    "name": "symbl",
                     "type": "symbol_code"
                 },
                 {
@@ -91,7 +91,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "symb",
+                    "name": "symbl",
                     "type": "symbol_code"
                 }
             ]
@@ -105,7 +105,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "symb",
+                    "name": "symbl",
                     "type": "symbol_code"
                 },
                 {
@@ -119,20 +119,20 @@
             "base": "",
             "fields": [
                 {
-                    "name": "symb",
+                    "name": "symbl",
                     "type": "symbol_code"
                 },
                 {
-                    "name": "usd_per",
+                    "name": "price",
                     "type": "float64"
                 },
                 {
-                    "name": "lastamp",
+                    "name": "stamp",
                     "type": "uint32"
                 },
                 {
-                    "name": "totals",
-                    "type": "uint32"
+                    "name": "total",
+                    "type": "uint64"
                 }
             ]
         },
@@ -149,7 +149,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "symb",
+                    "name": "symbl",
                     "type": "symbol_code"
                 }
             ]
@@ -167,7 +167,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "symb",
+                    "name": "symbl",
                     "type": "symbol_code"
                 },
                 {
@@ -185,7 +185,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "symb",
+                    "name": "symbl",
                     "type": "symbol_code"
                 },
                 {
@@ -203,7 +203,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "symb",
+                    "name": "symbl",
                     "type": "symbol_code"
                 },
                 {
@@ -217,24 +217,24 @@
             "base": "",
             "fields": [
                 {
-                    "name": "proposer",
-                    "type": "name"
-                },
-                {
                     "name": "cdp_type",
                     "type": "symbol_code"
                 },
                 {
-                    "name": "vote_yes",
-                    "type": "asset"
+                    "name": "proposer",
+                    "type": "name"
                 },
                 {
-                    "name": "vote_no",
-                    "type": "asset"
-                },
-                {
-                    "name": "expire",
+                    "name": "deadline",
                     "type": "uint32"
+                },
+                {
+                    "name": "yay",
+                    "type": "asset"
+                },
+                {
+                    "name": "nay",
+                    "type": "asset"
                 }
             ]
         },
@@ -247,7 +247,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "symb",
+                    "name": "symbl",
                     "type": "symbol_code"
                 },
                 {
@@ -301,7 +301,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "symb",
+                    "name": "symbl",
                     "type": "symbol_code"
                 }
             ]
@@ -311,7 +311,7 @@
             "base": "",
             "fields": [
                 {
-                    "name": "symbol",
+                    "name": "symbl",
                     "type": "symbol_code"
                 }
             ]
@@ -325,7 +325,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "symb",
+                    "name": "symbl",
                     "type": "symbol_code"
                 }
             ]
@@ -365,10 +365,6 @@
                 {
                     "name": "liquid8_ratio",
                     "type": "float64"
-                },
-                {
-                    "name": "fee_balance",
-                    "type": "asset"
                 },
                 {
                     "name": "stability_fee",
@@ -419,12 +415,8 @@
             "base": "",
             "fields": [
                 {
-                    "name": "symb",
+                    "name": "symbl",
                     "type": "symbol_code"
-                },
-                {
-                    "name": "down",
-                    "type": "bool"
                 }
             ]
         },
@@ -437,7 +429,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "symb",
+                    "name": "symbl",
                     "type": "symbol_code"
                 },
                 {
@@ -459,7 +451,7 @@
                     "type": "name"
                 },
                 {
-                    "name": "symb",
+                    "name": "symbl",
                     "type": "symbol_code"
                 },
                 {
