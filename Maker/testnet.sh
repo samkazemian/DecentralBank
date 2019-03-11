@@ -69,6 +69,8 @@ echo "=== COMPILING CONTRACTS ==="
 echo "=== DEPLOYING CONTRACTS ==="
 "$DEPLOY" $CONTRACT -j
 
+# cleos --url https://jungle.eosio.cr:443 system newaccount --stake-net "10.0000 EOS" --stake-cpu "10.0000 EOS" --buy-ram-kbytes 12 $CREATOR_ACCOUNT $NEW_ACCOUNT $OWNER_KEY $ACTIVE_KEY
+# cleos --url https://jungle.eosio.cr:443 system buyram $CREATOR_ACCOUNT $NEW_ACCOUNT "50 EOS"
 
 #=================================================================================#
 # OPEN
@@ -99,7 +101,7 @@ cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" cdp
 # PROPOSE
 echo "=== Proposing new CDP type  ==="
 
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT propose '["$USER_1", "FUD", "EOS", "USD", 2000, 2000000000, 1, 1, 30, 5, 0.20, 1.5]' -p $USER_1
+cleos --url https://jungle.eosio.cr:443 push action $CONTRACT propose '["$USER_1", "FUD", "EOS", "USD", 2000, 2000000000, 30, 5, 0.5, 0.1, 0.20, 1.5]' -p $USER_1
 
 #propose global settlement 
 #cleos --url https://jungle.eosio.cr:443 push action $CONTRACT propose '["rick", "FUD", "EOS", "USD", 0, 0, 0, 0, 0, 0, 0, 0]' -p rick
@@ -196,7 +198,7 @@ cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "USD" accounts
 # WIPE 
 echo "=== Push Dai ==="
 
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT wipe '["$USER_1", "FUD", "2.00 USD"]' -p $USER_1
+cleos --url https://jungle.eosio.cr:443 push action $CONTRACT wipe '["$USER_1", "FUD", "2.00 USD", "0.0001 VTO"]' -p $USER_1
 
 # verify that stabl amount was pushed
 cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" cdp
@@ -229,17 +231,17 @@ cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" cdp
 cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "USD" accounts
 
 
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT liquify '["$USER_2", "$USER_1", "FUD", "1.25 USD"]' -p $USER_2
+cleos --url https://jungle.eosio.cr:443 push action $CONTRACT liquify '["$USER_2", "$USER_1", "FUD", "2.25 USD"]' -p $USER_2
 sleep 1
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT liquify '["$USER_2", "$USER_1", "FUD", "1.50 USD"]' -p $USER_2
+cleos --url https://jungle.eosio.cr:443 push action $CONTRACT liquify '["$USER_2", "$USER_1", "FUD", "2.75 USD"]' -p $USER_2
 
 # wait for round to expire and switch to selling off VTO for the remaining balance
 echo "=== First round auction done, waiting for round to expire... ==="
 cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" cdp
 sleep 5
 
-# in order to test round 3, change the amount here to 0.25 and uncomment below
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT liquify '["$USER_2", "$USER_1", "FUD", "0.50 USD"]' -p $USER_2
+# in order to test round 3, change the amount here and uncomment below
+cleos --url https://jungle.eosio.cr:443 push action $CONTRACT liquify '["$USER_2", "$USER_1", "FUD", "0.25 USD"]' -p $USER_2
 sleep 5
 
 echo "=== Second round auction mid ==="

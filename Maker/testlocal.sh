@@ -111,7 +111,7 @@ cleos get table $CONTRACT "FUD" cdp
 # PROPOSE
 echo "=== Proposing new CDP type  ==="
 
-cleos push action $CONTRACT propose '["rick", "FUD", "EOS", "USD", 2000, 2000000000, 1, 1, 30, 5, 0.20, 1.5]' -p rick
+cleos push action $CONTRACT propose '["rick", "FUD", "EOS", "USD", 2000, 2000000000, 30, 5, 0.5, 0.1, 0.20, 1.5]' -p rick
 
 #propose global settlement 
 #cleos push action $CONTRACT propose '["rick", "FUD", "EOS", "USD", 0, 0, 0, 0, 0, 0, 0, 0]' -p rick
@@ -206,7 +206,7 @@ cleos get table $CONTRACT "USD" accounts
 # WIPE 
 echo "=== Push Dai ==="
 
-cleos push action $CONTRACT wipe '["rick", "FUD", "2.00 USD"]' -p rick
+cleos push action $CONTRACT wipe '["rick", "FUD", "2.00 USD", "0.0001 VTO"]' -p rick
 
 # verify that stabl amount was pushed
 cleos get table $CONTRACT "FUD" cdp
@@ -239,17 +239,17 @@ cleos get table $CONTRACT "FUD" cdp
 cleos get table $CONTRACT "USD" accounts
 
 
-cleos push action $CONTRACT liquify '["dick", "rick", "FUD", "1.25 USD"]' -p dick
+cleos push action $CONTRACT liquify '["dick", "rick", "FUD", "2.25 USD"]' -p dick
 sleep 1
-cleos push action $CONTRACT liquify '["dick", "rick", "FUD", "1.50 USD"]' -p dick
+cleos push action $CONTRACT liquify '["dick", "rick", "FUD", "2.75 USD"]' -p dick
 
 # wait for round to expire and switch to selling off VTO for the remaining balance
 echo "=== First round auction done, waiting for round to expire... ==="
 cleos get table $CONTRACT "FUD" cdp
 sleep 5
 
-# in order to test round 3, change the amount here to 0.25 and uncomment below
-cleos push action $CONTRACT liquify '["dick", "rick", "FUD", "0.50 USD"]' -p dick
+# in order to test round 3, change the amount here to and uncomment below
+cleos push action $CONTRACT liquify '["dick", "rick", "FUD", "0.25 USD"]' -p dick
 sleep 5
 
 echo "=== Second round auction mid ==="

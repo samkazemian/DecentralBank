@@ -8,7 +8,7 @@
 
 # Differences between cdpEOS (aka DaIQ) and cdpETH (aka MakerDAO)
 
-DaIQ successfully implements multi-collateral CDPs by accepting any eosio.token, and the entire protocol is implemented in less than 800 SLOC. 
+DaIQ successfully implements multi-collateral CDPs by accepting any eosio.token, and the entire protocol is implemented via only 15 distinct functions, and less than 800 SLOC. 
 
 The major discrepancy between the two protocols is in how
 liquidation auctions, stability fees, and governance are handled. For instance, we enforce a constraint where the owner of a CDP cannot liquify their own CDP.
@@ -24,7 +24,7 @@ Auction #2 is omitted entirely from our protocol: we do not endorse it because C
 
 Unlike in Ethereum where the primary constraint is speed and gas, with faster block times the main constraint in EOS is RAM so our approach was taken from the angle of a more space efficient implementation, and a simpler view of the computation overall. 
 
-On that last note, we also omit the calculation of stability fees on an APR basis on favor of a fixed percentage fee upon every draw action executed on a CDP. Moreover, our voting and referendum procedure has a common sense nature.
+On that last note, we also omit the calculation of stability fees on a global basis as in multi-collateral Dai (whenever debt is being taken on or repaid, the fee is minted into the contract's balance and incremented onto a CDP's debt), in favor of an APR-based deduction in VTO upon every wipe action executed on a CDP (closer to single-collateral Dai). Moreover, our voting and referendum procedure has a very common sense nature:
 
 Any account may create a proposal, and as many varying proposals as desired, but we do constrain proposals per CDP type. Only one proposal may be active (in voting) per CDP type (new or modification of existing).
 
@@ -35,3 +35,6 @@ All voting tokens are refunded to voters upon the expiration of the voting perio
 Global settlement is subjected to popular vote like any CDP change or creation proposal, rather than designated to a select group of Keepers as in MakerDAO.
 
 Global constants are the designated accounts that provide price feeds, the voting period of 2 weeks for proposals, and the minimum age of 5 minutes (how recent) for price data that is considered acceptable. 
+
+//TODO: 
+medium.com/makerdao/dai-reward-rate-earn-a-reward-from-holding-dai-10a07f52f3cf

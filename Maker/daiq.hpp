@@ -22,6 +22,7 @@ CONTRACT daiq : public contract
    public:
       static constexpr uint32_t FEED_FRESH = 300; // seconds in 5 minute period
       static constexpr uint32_t VOTE_PERIOD = 10; //604800; // seconds in a week
+      static constexpr uint32_t SECYR = 31536000; //604800; // seconds in a year
       
       /* Global settlement:
        * The system uses the market price of collateral 
@@ -35,8 +36,8 @@ CONTRACT daiq : public contract
        */ ACTION propose( name proposer, symbol_code symbl, 
                           symbol_code cltrl, symbol_code stbl,
                           uint64_t max, uint64_t gmax, 
-                          uint64_t pen, uint64_t fee,
                           uint32_t tau, uint32_t ttl,
+                          double pen, double fee,
                           double beg, double liq  );
 
       /* Take a position (for/against) on a cdp proposal
@@ -76,7 +77,8 @@ CONTRACT daiq : public contract
 
       /* Owner can send back dai and reduce 
        * the cdp's issued stablecoin balance.
-       */ ACTION wipe( name owner, symbol_code symbl, asset quantity );            
+       */ ACTION wipe( name owner, symbol_code symbl, 
+                       asset quantity, asset fee );            
 
       /* Owner can close this CDP, if the price feed
        * is up to date and the CDP is not in liquidation. 
@@ -123,6 +125,7 @@ CONTRACT daiq : public contract
       TABLE cdp 
       {  //SCOPE: cdp type symbol
          name     owner;
+         uint32_t created;
          //Amount of collateral currently locked by this CDP
          asset    collateral;
          //stablecoin issued
@@ -142,7 +145,6 @@ CONTRACT daiq : public contract
          asset       yay;
          asset       nay;
          
-         
          uint64_t    primary_key() const { return cdp_type.raw(); }
       }; typedef     eosio::multi_index< "prop"_n, prop > props;
 
@@ -161,12 +163,12 @@ CONTRACT daiq : public contract
          uint64_t    debt_ceiling;
          
          //by default, 13% of the collateral in the CDP 
-         uint64_t    penalty_ratio; //units are tenths of a %
+         double      penalty_ratio; //units are tenths of a %
          //collateral asset units needed per issued stable tokens
          double      liquid8_ratio;
          
          //Total debt owed by CDPs of this type, denominated in debt unit
-         asset       stability_fee; //units are APR?
+         double      stability_fee; //units are APR?
          
          //TODO: instead of these two names use extended assets for totals below
          //name      stabl_contract; //account name of eosio.token for stablecoin
@@ -192,7 +194,7 @@ CONTRACT daiq : public contract
          uint64_t    primary_key() const { return symbl.raw(); }
       }; typedef     eosio::multi_index< "feed"_n, feed > feeds;
 
-      TABLE account 
+      TABLE account
       {  asset    balance;
          name     owner;
             

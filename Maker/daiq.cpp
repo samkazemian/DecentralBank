@@ -11,16 +11,16 @@
 
 #include "daiq.hpp"
 
-#define DEBUG
-#include "logger.hpp"
-
 using namespace eosio;
 
 //TODO: balances are non-zero for debug purposes, should be 0
 //except maybe VTO, you should pre-seed accounts with some amt
+//add better initializer for _self VTO balance (stability fees)
+
 ACTION daiq::open( name owner, symbol_code symbl, name ram_payer )
 {  require_auth( ram_payer );
-   
+   eosio_assert( symbl.is_valid(), "invalid symbol name" );
+
    accounts vetos( _self, symbol("VTO", 4).code().raw() );  
    auto vetoit = vetos.find( owner.value );
    if ( vetoit == vetos.end() )
@@ -28,8 +28,12 @@ ACTION daiq::open( name owner, symbol_code symbl, name ram_payer )
          a.owner = owner;
          a.balance = asset{ 1000000, symbol("VTO", 4) };
       });
-   eosio_assert( symbl.is_valid(), "invalid symbol name" );
-   
+   auto vit = vetos.find( _self.value );
+   if ( vit == vetos.end() )
+      vetos.emplace( _self, [&]( auto& a ) {
+         a.owner = _self;
+         a.balance = asset{ 0, symbol("VTO", 4) };
+      });
    stats stable( _self, _self.value );
    auto s = stable.find( symbl.raw() );
    if ( s != stable.end() ) {
@@ -56,6 +60,7 @@ ACTION daiq::open( name owner, symbol_code symbl, name ram_payer )
                      );
          cdpstable.emplace( ram_payer, [&]( auto& p ) {
             p.owner = owner;
+            p.created = now();
             p.collateral = asset{ 0, st.total_collateral.symbol };
             p.stablecoin = asset{ 0, st.total_stablecoin.symbol };
          }); 
@@ -83,6 +88,7 @@ ACTION daiq::give( name giver, name taker, symbol_code symbl )
                );
    cdpstable.emplace( giver, [&]( auto& p ) { 
       p.owner = taker;
+      p.created = git.created;
       p.collateral = git.collateral;
       p.stablecoin = git.stablecoin;
    });
@@ -205,15 +211,21 @@ ACTION daiq::draw( name owner, symbol_code symbl, asset quantity )
    });
 }
 
-ACTION daiq::wipe( name owner, symbol_code symbl, asset quantity )
-{  require_auth( owner );
-   eosio_assert( quantity.amount > 0, 
-                 "must use positive quantity" 
-               );
-   eosio_assert( quantity.is_valid(), "invalid quantity" );
+ACTION daiq::wipe( name owner, symbol_code symbl, 
+                   asset quantity, asset fee ) {  
+   require_auth( owner );
    eosio_assert( symbl.is_valid(), "invalid symbol name" ); 
-  
+   eosio_assert( quantity.is_valid(), "invalid quantity" );
+   eosio_assert( fee.is_valid(), "invalid fee" );
+   eosio_assert( fee.symbol == symbol("VTO", 4), 
+                 "must vote with governance token"
+               );
+   eosio_assert( fee.amount > 0 &&
+                 quantity.amount > 0, 
+                 "must use positive quantities" 
+               );
    stats stable( _self, _self.value );
+   feeds feedstable(_self, _self.value );
    const auto& st = stable.get( symbl.raw(),
                                     "cdp type does not exist" 
                                   );
@@ -223,11 +235,20 @@ ACTION daiq::wipe( name owner, symbol_code symbl, asset quantity )
    cdps cdpstable( _self, symbl.raw() );
    const auto& it = cdpstable.get( owner.value, 
                                    "(cdp type, owner) mismatch" 
-                                 );
+                                 ); 
    eosio_assert( it.live, "cdp in liquidation" );
    eosio_assert( it.stablecoin > quantity, 
                  "can't wipe this much" 
                );
+   const auto& fv = feedstable.get( symbol("VTO", 4).code().raw(), 
+                                    "no price data" 
+                                  );
+   double amt = st.stability_fee * quantity.amount / (fv.price * 100);
+   eosio_assert( fee.amount > (now() - it.created) / SECYR * amt * 100,
+                 "fee underpaying"
+               ); 
+   sub_balance( owner, fee ); //decrease owner's VTO balance (pay fee)
+   add_balance( _self, fee ); //increase contract's total fee balance
    sub_balance( owner, quantity ); //decrease owner's stablecoin balance
    
    //update amount of stablecoin in circulation for this cdp type
@@ -237,7 +258,6 @@ ACTION daiq::wipe( name owner, symbol_code symbl, asset quantity )
    cdpstable.modify( it, same_payer, [&]( auto& p ) { //update cdp
       p.stablecoin -= quantity; 
    });
-   feeds feedstable(_self, _self.value );
    const auto& fs = feedstable.get( quantity.symbol.code().raw(), 
                                     "no price data" 
                                   );
@@ -313,11 +333,6 @@ ACTION daiq::shut( name owner, symbol_code symbl )
       add_balance( owner, it.collateral );
       new_total_clatrl += it.collateral;
    }
-
-   //TODAY: grows over time?
-   //do on every bail, pro rata
-   //increment cdp type fee balance
-   //sub_balance( owner, st.stability_fee); 
    stable.modify( st, same_payer, [&]( auto& t ) { 
       t.total_stablecoin = new_total_stabl;
       t.total_collateral = new_total_clatrl; 
@@ -353,8 +368,8 @@ ACTION daiq::settle( symbol_code symbl )
 }
 
 ACTION daiq::vote( name voter, symbol_code symbl, 
-                    bool against, asset quantity 
-                  ) { require_auth( voter );
+                   bool against, asset quantity 
+                 ) { require_auth( voter );
    eosio_assert( symbl.is_valid(), "invalid symbol name" );
    eosio_assert( quantity.is_valid() && quantity.amount > 0, 
                  "invalid quantity" 
@@ -403,7 +418,6 @@ ACTION daiq::liquify( name bidder, name owner,
    eosio_assert( bidamt.is_valid() && bidamt.amount > 0,
                  "bid is invalid" 
                );
-   feeds feedstable( _self, _self.value );
    stats stable( _self, _self.value );
    const auto& st = stable.get( symbl.raw(), 
                                     "cdp type doesn't exist" 
@@ -412,6 +426,7 @@ ACTION daiq::liquify( name bidder, name owner,
    const auto& it = cdpstable.get( owner.value, 
                                    "this cdp doesn't exist" 
                                  );
+   feeds feedstable( _self, _self.value );
    if ( it.live ) {
       eosio_assert ( it.stablecoin.amount > 0, "can't liquify this cdp");
       const auto& fc = feedstable.get( it.collateral.symbol.code().raw(), 
@@ -428,6 +443,7 @@ ACTION daiq::liquify( name bidder, name owner,
                   );
       cdpstable.modify( it, bidder, [&]( auto& p ) { //liquidators get the RAM
          p.live = false; 
+         p.stablecoin.amount += p.stablecoin.amount * st.penalty_ratio;
       });
    } bids bidstable( _self, symbl.raw() );
    auto bt = bidstable.find( owner.value );
@@ -494,13 +510,17 @@ ACTION daiq::liquify( name bidder, name owner,
                      ); 
          if ( it.stablecoin.amount > 0 )
             cdpstable.modify( it, same_payer, [&]( auto& p ) {  
-               p.collateral = asset( int64_t(it.stablecoin.amount / fv.price) * 100, symbol("VTO", 4) );
+               p.collateral = asset( int64_t(it.stablecoin.amount / fv.price) * 100, 
+                                     symbol("VTO", 4) 
+                                   );
             });   
          else if ( it.stablecoin.amount < 0 ) {
             asset stamt = -it.stablecoin;
             cdpstable.modify( it, same_payer, [&]( auto& p ) {  
                p.collateral = stamt;
-               p.stablecoin = asset( int64_t(stamt.amount / fv.price) * 100, symbol("VTO", 4) );
+               p.stablecoin = asset( int64_t(stamt.amount / fv.price) * 100, 
+                                     symbol("VTO", 4) 
+                                   );
             });
          }
          eosio_assert( bidamt.symbol == it.stablecoin.symbol, 
@@ -541,9 +561,9 @@ ACTION daiq::liquify( name bidder, name owner,
 
 ACTION daiq::propose(  name proposer, symbol_code symbl, 
                        symbol_code cltrl, symbol_code stbl,
-                       uint64_t max, uint64_t gmax, 
-                       uint64_t pen, uint64_t fee, 
+                       uint64_t max, uint64_t gmax,  
                        uint32_t tau, uint32_t ttl,
+                       double pen, double fee,
                        double beg, double liq 
                      ) { require_auth( proposer );
    eosio_assert( symbl.is_valid(), 
@@ -591,7 +611,7 @@ ACTION daiq::propose(  name proposer, symbol_code symbl,
          t.debt_ceiling = max;
          t.penalty_ratio = pen;
          t.liquid8_ratio = liq;
-         t.stability_fee = asset(fee, symbol("VTO", 4));
+         t.stability_fee = fee;
          t.total_stablecoin = asset(0, symbol(stbl, 2 )); 
          t.total_collateral = asset(0, symbol(cltrl, 4 ));
       });

@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu Mar  7 15:44:42 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon Mar 11 13:38:13 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -67,6 +67,10 @@
                 {
                     "name": "owner",
                     "type": "name"
+                },
+                {
+                    "name": "created",
+                    "type": "uint32"
                 },
                 {
                     "name": "collateral",
@@ -267,20 +271,20 @@
                     "type": "uint64"
                 },
                 {
-                    "name": "pen",
-                    "type": "uint64"
-                },
-                {
-                    "name": "fee",
-                    "type": "uint64"
-                },
-                {
                     "name": "tau",
                     "type": "uint32"
                 },
                 {
                     "name": "ttl",
                     "type": "uint32"
+                },
+                {
+                    "name": "pen",
+                    "type": "float64"
+                },
+                {
+                    "name": "fee",
+                    "type": "float64"
                 },
                 {
                     "name": "beg",
@@ -360,7 +364,7 @@
                 },
                 {
                     "name": "penalty_ratio",
-                    "type": "uint64"
+                    "type": "float64"
                 },
                 {
                     "name": "liquid8_ratio",
@@ -368,7 +372,7 @@
                 },
                 {
                     "name": "stability_fee",
-                    "type": "asset"
+                    "type": "float64"
                 },
                 {
                     "name": "total_collateral",
@@ -456,6 +460,10 @@
                 },
                 {
                     "name": "quantity",
+                    "type": "asset"
+                },
+                {
+                    "name": "fee",
                     "type": "asset"
                 }
             ]
