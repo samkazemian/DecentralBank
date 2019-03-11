@@ -9,7 +9,7 @@
     "accounts": [
       {
         "permission": {
-          "actor": "daemu",
+          "actor": "daiq",
           "permission": "eosio.code"
         },
         "weight": 1
