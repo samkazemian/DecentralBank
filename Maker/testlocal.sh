@@ -87,9 +87,11 @@ cleos set account permission $CONTRACT active ./perm.json -p $CONTRACT@active
 echo "=== Opening CDP/Balances  ==="
 
 # on first run, when given cdp type doesn't exist yet, 
-# "open" will only pre-fund rick with voting tokens
-# and trigger an assert without executing to completion
-# cleos push action $CONTRACT open '["rick", "FUD", "rick"]' -p rick
+# "test" will simply pre-fund accounts with tokens
+
+# !!!!!!!!! UNCOMMENT FOR LOCAL TESTING !!!!!!!!!!
+#cleos push action $CONTRACT test '["rick"]' -p rick
+#cleos push action $CONTRACT test '["dick"]' -p dick
 
 # verify that balances have entry for tracking rick's tokens
 cleos get table $CONTRACT "IQ" accounts # verify first run
@@ -150,25 +152,6 @@ cleos get table $CONTRACT $CONTRACT prop
 # verify that stat entry for this cdp type was referended into existence
 cleos get table $CONTRACT $CONTRACT stat
 
-# on second run, "open" will create a cdp for rick of given type
-# and create relevant balance entries if they dont exist
-cleos push action $CONTRACT open '["rick", "FUD", "rick"]' -p rick
-
-#=================================================================================#
-# GIVE
-#echo "=== Giving CDP  to dick==="
-
-#cleos push action $CONTRACT give '["rick", "dick" "FUD"]' -p rick
-# verify that rick's cdp was transfered to dick
-#cleos get table $CONTRACT "FUD" cdp
-
-
-echo "=== Giving CDP back to rick  ==="
-#cleos push action $CONTRACT open '["dick", "FUD", "dick"]' -p dick
-#cleos push action $CONTRACT give '["dick", "rick" "FUD"]' -p dick
-# verify that dick's cdp was transfered back to rick
-cleos get table $CONTRACT "FUD" cdp
-
 #=================================================================================#
 # CREATE PRICE FEEDS
 echo "=== Creating price feeds ==="
@@ -179,6 +162,24 @@ cleos push action $CONTRACT upfeed '["daiq", "1.00 USD", "FUD", "USD"]' -f -p da
 
 # verify that price was updated
 cleos get table $CONTRACT $CONTRACT feed
+
+#=================================================================================#
+# GIVE
+#echo "=== Giving CDP  to dick==="
+
+#cleos push action $CONTRACT give '["rick", "dick" "FUD"]' -p rick
+# verify that rick's cdp was transfered to dick
+#cleos get table $CONTRACT "FUD" cdp
+
+#echo "=== Giving CDP back to rick  ==="
+#cleos push action $CONTRACT open '["dick", "FUD", "dick"]' -p dick
+#cleos push action $CONTRACT give '["dick", "rick" "FUD"]' -p dick
+
+# OPEN
+cleos push action $CONTRACT open '["rick", "FUD", "rick"]' -p rick
+
+# verify that dick's cdp was transfered back to rick
+cleos get table $CONTRACT "FUD" cdp
 
 #=================================================================================#
 # LOCK
@@ -223,6 +224,8 @@ cleos push action $CONTRACT bail '["rick", "FUD", "1.0000 EOS"]' -p rick
 cleos get table $CONTRACT "FUD" cdp
 # verify that rick's clatrl balance was updated
 cleos get table $CONTRACT "EOS" accounts
+
+sleep 2
 
 #=================================================================================#
 # UPDATE EOS PRICE FEED - DOWN

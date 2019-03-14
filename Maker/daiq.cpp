@@ -13,6 +13,13 @@
 
 using namespace eosio;      
 
+// ACTION daiq::test( name owner ) 
+// {  require_auth( owner );
+//    add_balance( owner, asset(1000, symbol("USD", 2)) );
+//    add_balance( owner, asset(10000, symbol("IQ", 3)) );
+//    add_balance( owner, asset(100000, symbol("EOS", 4)) );
+// }
+
 ACTION daiq::open( name owner, symbol_code symbl, name ram_payer )
 {  require_auth( ram_payer );
    eosio_assert( symbl.is_valid(), "invalid symbol name" );
@@ -100,12 +107,10 @@ ACTION daiq::bail( name owner, symbol_code symbl, asset quantity )
    eosio_assert( fc.stamp >= now() - FEED_FRESH || !st.live,
                  "collateral price feed data too stale"
                ); 
-   uint64_t amt = ( it.collateral.amount - quantity.amount ) / 100;
-   
-   if ( !it.stablecoin.amount ) //just safety against divide by 0
-        amt = st.liquid8_ratio;
-   else amt *= fc.price.amount / it.stablecoin.amount;
-   
+   uint64_t amt = st.liquid8_ratio;
+   if ( it.stablecoin.amount ) //just safety against divide by 0
+      amt = ( fc.price.amount * 100 / it.stablecoin.amount ) *
+            ( it.collateral.amount - quantity.amount ) / 10000;
    eosio_assert( amt >= st.liquid8_ratio, 
                  "can't go below liquidation ratio" 
                );
@@ -160,7 +165,8 @@ ACTION daiq::draw( name owner, symbol_code symbl, asset quantity )
    eosio_assert( fc.stamp >= now() - FEED_FRESH,
                  "collateral price feed data too stale"
                ); 
-   uint64_t liq = ( it.collateral.amount / 100 ) * ( amt / fc.price.amount );
+   uint64_t liq = ( fc.price.amount * 100 / amt ) *
+                  ( it.collateral.amount ) / 10000;
    eosio_assert( liq >= st.liquid8_ratio, 
                  "can't go below liquidation ratio" 
                );
@@ -210,8 +216,10 @@ ACTION daiq::wipe( name owner, symbol_code symbl,
    const auto& fv = feedstable.get( IQSYMBOL.code().raw(), 
                                     "no price data" 
                                   );
-   uint64_t apr = 10 * ( now() - it.created ) / SECYR;
-   apr *= st.stability_fee * ( quantity.amount / fv.price.amount );
+   uint64_t apr = 1000000 * st.stability_fee * 
+                  ( now() - it.created ) / SECYR *
+                  ( quantity.amount * 100 / fv.price.amount ) / 
+                  100000;
    eosio_assert( fee.amount >= apr,
                  "stability fee underpaid acc. APR for this cdp type"
                ); 
@@ -392,18 +400,17 @@ ACTION daiq::liquify( name bidder, name owner,
       const auto& fc = feedstable.get( it.collateral.symbol.code().raw(), 
                                        "no price data" 
                                      );
-      eosio_assert( fc.stamp >= now() - FEED_FRESH,
+      eosio_assert( fc.stamp >= now() - FEED_FRESH || !st.live,
                     "collateral price feed data too stale"
                   ); 
-      uint64_t liq = it.collateral.amount * fc.price.amount;
-      liq /= it.stablecoin.amount * 100;
-      
+      uint64_t liq = ( fc.price.amount * 100 / it.stablecoin.amount ) *
+                     ( it.collateral.amount ) / 10000;
       eosio_assert( st.liquid8_ratio > liq,
                     "must exceed liquidation ratio" 
                   );
       cdpstable.modify( it, bidder, [&]( auto& p ) { //liquidators get the RAM
          p.live = false; 
-         p.stablecoin.amount += p.stablecoin.amount * ( st.penalty_ratio / 100 );
+         p.stablecoin.amount += ( p.stablecoin.amount * st.penalty_ratio ) / 100;
       });
    } 
    bids bidstable( _self, symbl.raw() );
@@ -616,6 +623,7 @@ ACTION daiq::referended( name proposer, symbol_code symbl )
                t.stability_fee = pstat -> stability_fee;
                t.penalty_ratio = pstat -> penalty_ratio;
                t.liquid8_ratio = pstat -> liquid8_ratio;
+               t.fee_balance = pstat -> fee_balance;
                t.total_stablecoin = pstat -> total_stablecoin;
                t.total_collateral = pstat -> total_collateral;
             });
@@ -650,8 +658,6 @@ ACTION daiq::referended( name proposer, symbol_code symbl )
    }
 }
 
-
-//TODO: IQ doesnt have a feeder
 ACTION daiq::upfeed( name feeder, asset price, 
                      symbol_code cdp_type, symbol_code symbl 
                    ) {  require_auth( feeder );
@@ -662,14 +668,14 @@ ACTION daiq::upfeed( name feeder, asset price,
                );
    if ( !has_auth( _self ) ) {
       stats stable( _self, _self.value );
-      const auto& st = stable.get( symbl.raw(), 
+      const auto& st = stable.get( cdp_type.raw(), 
                                    "cdp type doesn't exist" 
                                  );
       eosio_assert( st.feeder == feeder, 
                     "account not authorized to be price feeder"  
                   );
-      eosio_assert( st.total_stablecoin.symbol == price.symbol ||
-                    st.total_collateral.symbol == price.symbol, 
+      eosio_assert( st.total_stablecoin.symbol == price.symbol &&
+                    st.total_collateral.symbol.code() == symbl, 
                     "price symbol must match stablecoin symbol"  
                   );
    }
@@ -753,7 +759,7 @@ void daiq::add_balance( name owner, asset value )
    
    if( to == to_acnts.end() ) 
       to_acnts.emplace( owner, [&]( auto& a )
-      { a.balance = value; });
+      { a.owner = owner; a.balance = value; });
    else 
       to_acnts.modify( to, same_payer, [&]( auto& a ) 
       { a.balance += value; });
@@ -765,6 +771,6 @@ extern "C" void apply( uint64_t receiver, uint64_t code, uint64_t action )
       eosio::execute_action( eosio::name(receiver), eosio::name(code), &daiq::deposit );
    if ( code == receiver )
       switch ( action ) {
-         EOSIO_DISPATCH_HELPER( daiq, (open)(close)(shut)(lock)(bail)(draw)(wipe)(settle)(vote)(propose)(referended)(liquify)(upfeed)(withdraw)/*(give)*/ )
+         EOSIO_DISPATCH_HELPER( daiq, /*(give)(test)*/(open)(close)(shut)(lock)(bail)(draw)(wipe)(settle)(vote)(propose)(referended)(liquify)(upfeed)(withdraw) )
       }
 }
