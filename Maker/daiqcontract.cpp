@@ -695,10 +695,10 @@ ACTION daiqcontract::upfeed( name feeder, asset price,
 }
 
 ACTION daiqcontract::deposit( name    from,
-                      name    to,
-                      asset   quantity,
-                      string  memo 
-                     ) { require_auth( from );
+                              name    to,
+                              asset   quantity,
+                              string  memo 
+                            ) { require_auth( from );
    eosio_assert( quantity.is_valid(), "invalid quantity" );
    eosio_assert( quantity.amount > 0, "must transfer positive quantity" );
    eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
@@ -709,10 +709,10 @@ ACTION daiqcontract::deposit( name    from,
 }
 
 ACTION daiqcontract::withdraw( name    from,
-                       name    to,
-                       asset   quantity,
-                       string  memo 
-                     ) { require_auth( from );
+                               name    to,
+                               asset   quantity,
+                               string  memo 
+                             ) { require_auth( from );
    eosio_assert( quantity.is_valid(), "invalid quantity" );
    eosio_assert( quantity.amount > 0, "must transfer positive quantity" );
    eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
@@ -765,7 +765,11 @@ void daiqcontract::add_balance( name owner, asset value )
 
 //checking all transfers, and not only from EOS system token
 extern "C" void apply( uint64_t receiver, uint64_t code, uint64_t action ) 
-{  if ( action == "deposit"_n.value && code != receiver )
+{  if ( action == "transfer"_n.value && 
+        ( receiver == "eosio.token"_n.value || 
+          receiver == "everipediaiq"_n.value
+        )
+      )
       eosio::execute_action( eosio::name(receiver), eosio::name(code), &daiqcontract::deposit );
    if ( code == receiver )
       switch ( action ) {
