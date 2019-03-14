@@ -9,18 +9,45 @@
  *   tests in ./testlocal.sh and ./testnet.sh
  */
 
-#include "daiq.hpp"
+#include "daiqcontract.hpp"
 
 using namespace eosio;      
 
-// ACTION daiq::test( name owner ) 
+// ACTION daiqcontract::test( name owner ) 
 // {  require_auth( owner );
 //    add_balance( owner, asset(1000, symbol("USD", 2)) );
 //    add_balance( owner, asset(10000, symbol("IQ", 3)) );
 //    add_balance( owner, asset(100000, symbol("EOS", 4)) );
 // }
+// ACTION daiqcontract::give( name giver, name taker, symbol_code symbl )
+// {  require_auth( giver ); 
+//    is_account( taker );
+//    eosio_assert( symbl.is_valid(), "invalid symbol name" );
+   
+//    stats stable( _self, _self.value );
+//    const auto& st = stable.get( symbl.raw(), 
+//                                     "cdp type doesn't exist" 
+//                                   );
+//    cdps cdpstable( _self, symbl.raw() );
+//    const auto& git = cdpstable.get( giver.value, 
+//                                    "(cdp type, owner) mismatch" 
+//                                   );  
+//    eosio_assert( git.live, "cdp is in liquidation" );
 
-ACTION daiq::open( name owner, symbol_code symbl, name ram_payer )
+//    auto tit = cdpstable.find( taker.value );
+//    eosio_assert( tit == cdpstable.end(), 
+//                  "taker already has a cdp of this type" 
+//                );
+//    cdpstable.emplace( giver, [&]( auto& p ) { 
+//       p.owner = taker;
+//       p.created = git.created;
+//       p.collateral = git.collateral;
+//       p.stablecoin = git.stablecoin;
+//    });
+//    cdpstable.erase( git );
+// }
+
+ACTION daiqcontract::open( name owner, symbol_code symbl, name ram_payer )
 {  require_auth( ram_payer );
    eosio_assert( symbl.is_valid(), "invalid symbol name" );
 
@@ -50,35 +77,7 @@ ACTION daiq::open( name owner, symbol_code symbl, name ram_payer )
    }); 
 }
 
-// ACTION daiq::give( name giver, name taker, symbol_code symbl )
-// {  require_auth( giver ); 
-//    is_account( taker );
-//    eosio_assert( symbl.is_valid(), "invalid symbol name" );
-   
-//    stats stable( _self, _self.value );
-//    const auto& st = stable.get( symbl.raw(), 
-//                                     "cdp type doesn't exist" 
-//                                   );
-//    cdps cdpstable( _self, symbl.raw() );
-//    const auto& git = cdpstable.get( giver.value, 
-//                                    "(cdp type, owner) mismatch" 
-//                                   );  
-//    eosio_assert( git.live, "cdp is in liquidation" );
-
-//    auto tit = cdpstable.find( taker.value );
-//    eosio_assert( tit == cdpstable.end(), 
-//                  "taker already has a cdp of this type" 
-//                );
-//    cdpstable.emplace( giver, [&]( auto& p ) { 
-//       p.owner = taker;
-//       p.created = git.created;
-//       p.collateral = git.collateral;
-//       p.stablecoin = git.stablecoin;
-//    });
-//    cdpstable.erase( git );
-// }
-
-ACTION daiq::bail( name owner, symbol_code symbl, asset quantity )
+ACTION daiqcontract::bail( name owner, symbol_code symbl, asset quantity )
 {  require_auth(owner);
    eosio_assert( quantity.is_valid(), "invalid quantity" );
    eosio_assert( symbl.is_valid(), "invalid symbol name" );
@@ -126,7 +125,7 @@ ACTION daiq::bail( name owner, symbol_code symbl, asset quantity )
    {  f.total += quantity.amount; });
 }
 
-ACTION daiq::draw( name owner, symbol_code symbl, asset quantity )
+ACTION daiqcontract::draw( name owner, symbol_code symbl, asset quantity )
 {  require_auth( owner );
    eosio_assert( quantity.is_valid(), "invalid quantity" );
    eosio_assert( symbl.is_valid(), "invalid symbol name" );
@@ -185,7 +184,7 @@ ACTION daiq::draw( name owner, symbol_code symbl, asset quantity )
    {  f.total += quantity.amount; });
 }
 
-ACTION daiq::wipe( name owner, symbol_code symbl, 
+ACTION daiqcontract::wipe( name owner, symbol_code symbl, 
                    asset quantity, asset fee ) {  
    require_auth( owner );
    eosio_assert( symbl.is_valid(), "invalid symbol name" ); 
@@ -218,8 +217,7 @@ ACTION daiq::wipe( name owner, symbol_code symbl,
                                   );
    uint64_t apr = 1000000 * st.stability_fee * 
                   ( now() - it.created ) / SECYR *
-                  ( quantity.amount * 100 / fv.price.amount ) / 
-                  100000;
+                  ( quantity.amount * 100 / fv.price.amount ) / 100000;
    eosio_assert( fee.amount >= apr,
                  "stability fee underpaid acc. APR for this cdp type"
                ); 
@@ -241,7 +239,7 @@ ACTION daiq::wipe( name owner, symbol_code symbl,
    {  f.total -= quantity.amount; });
 }
 
-ACTION daiq::lock( name owner, symbol_code symbl, asset quantity ) 
+ACTION daiqcontract::lock( name owner, symbol_code symbl, asset quantity ) 
 {  require_auth( owner );
    eosio_assert( quantity.is_valid(), "invalid quantity" );
    eosio_assert( symbl.is_valid(), "invalid symbol name" );
@@ -279,7 +277,7 @@ ACTION daiq::lock( name owner, symbol_code symbl, asset quantity )
    {  f.total -= quantity.amount; });
 }
 
-ACTION daiq::shut( name owner, symbol_code symbl ) 
+ACTION daiqcontract::shut( name owner, symbol_code symbl ) 
 {  require_auth( owner );
    eosio_assert( symbl.is_valid(), "invalid symbol name" );
   
@@ -310,7 +308,7 @@ ACTION daiq::shut( name owner, symbol_code symbl )
    cdpstable.erase( it );
 }
 
-ACTION daiq::settle( symbol_code symbl ) 
+ACTION daiqcontract::settle( symbol_code symbl ) 
 {  require_auth( _self );
    eosio_assert( symbl.is_valid(), "invalid symbol name" );
    
@@ -335,7 +333,7 @@ ACTION daiq::settle( symbol_code symbl )
    {  t.live = false; });
 }
 
-ACTION daiq::vote( name voter, symbol_code symbl, 
+ACTION daiqcontract::vote( name voter, symbol_code symbl, 
                    bool against, asset quantity 
                  ) { require_auth( voter );
    eosio_assert( symbl.is_valid(), "invalid symbol name" );
@@ -374,7 +372,7 @@ ACTION daiq::vote( name voter, symbol_code symbl,
       });
 }
 
-ACTION daiq::liquify( name bidder, name owner, 
+ACTION daiqcontract::liquify( name bidder, name owner, 
                       symbol_code symbl, asset bidamt 
                     ) { require_auth( bidder );
    eosio_assert( bidder.value != owner.value, 
@@ -512,7 +510,7 @@ ACTION daiq::liquify( name bidder, name owner,
    }
 }
 
-ACTION daiq::propose(  name proposer, symbol_code symbl, 
+ACTION daiqcontract::propose(  name proposer, symbol_code symbl, 
                        symbol_code clatrl, symbol_code stabl,
                        uint64_t max, uint64_t gmax,  
                        uint64_t pen, uint64_t fee,
@@ -587,7 +585,7 @@ ACTION daiq::propose(  name proposer, symbol_code symbl,
    txn.send(txid, _self); 
 }
 
-ACTION daiq::referended( name proposer, symbol_code symbl ) 
+ACTION daiqcontract::referended( name proposer, symbol_code symbl ) 
 {  require_auth( _self );
    eosio_assert( symbl.is_valid(), "invalid symbol name" );
   
@@ -658,7 +656,7 @@ ACTION daiq::referended( name proposer, symbol_code symbl )
    }
 }
 
-ACTION daiq::upfeed( name feeder, asset price, 
+ACTION daiqcontract::upfeed( name feeder, asset price, 
                      symbol_code cdp_type, symbol_code symbl 
                    ) {  require_auth( feeder );
    eosio_assert( price.is_valid(), "invalid quantity" );
@@ -696,11 +694,11 @@ ACTION daiq::upfeed( name feeder, asset price,
    }
 }
 
-ACTION daiq::deposit( name    from,
-                      name    to,
-                      asset   quantity,
-                      string  memo 
-                     ) { require_auth( from );
+ACTION daiqcontract::deposit( name    from,
+                              name    to,
+                              asset   quantity,
+                              string  memo 
+                            ) { require_auth( from );
    eosio_assert( quantity.is_valid(), "invalid quantity" );
    eosio_assert( quantity.amount > 0, "must transfer positive quantity" );
    eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
@@ -710,11 +708,11 @@ ACTION daiq::deposit( name    from,
    add_balance( to, quantity );
 }
 
-ACTION daiq::withdraw( name    from,
-                       name    to,
-                       asset   quantity,
-                       string  memo 
-                     ) { require_auth( from );
+ACTION daiqcontract::withdraw( name    from,
+                               name    to,
+                               asset   quantity,
+                               string  memo 
+                             ) { require_auth( from );
    eosio_assert( quantity.is_valid(), "invalid quantity" );
    eosio_assert( quantity.amount > 0, "must transfer positive quantity" );
    eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
@@ -729,7 +727,7 @@ ACTION daiq::withdraw( name    from,
    ).send();
 }
 
-ACTION daiq::close( name owner, symbol_code symbl ) 
+ACTION daiqcontract::close( name owner, symbol_code symbl ) 
 {  require_auth( owner );
    accounts acnts( _self, symbl.raw() );
    auto it = acnts.get( owner.value,
@@ -741,7 +739,7 @@ ACTION daiq::close( name owner, symbol_code symbl )
    acnts.erase( it );
 }
 
-void daiq::sub_balance( name owner, asset value ) 
+void daiqcontract::sub_balance( name owner, asset value ) 
 {  accounts from_acnts( _self, value.symbol.code().raw() );
    const auto& from = from_acnts.get( owner.value, 
                                       "no balance object found" 
@@ -753,7 +751,7 @@ void daiq::sub_balance( name owner, asset value )
    {  a.balance -= value; });
 }
 
-void daiq::add_balance( name owner, asset value ) 
+void daiqcontract::add_balance( name owner, asset value ) 
 {  accounts to_acnts( _self, value.symbol.code().raw() );
    auto to = to_acnts.find( owner.value );
    
@@ -767,10 +765,14 @@ void daiq::add_balance( name owner, asset value )
 
 //checking all transfers, and not only from EOS system token
 extern "C" void apply( uint64_t receiver, uint64_t code, uint64_t action ) 
-{  if ( action == "deposit"_n.value && code != receiver )
-      eosio::execute_action( eosio::name(receiver), eosio::name(code), &daiq::deposit );
+{  if ( action == "transfer"_n.value && 
+        ( receiver == "eosio.token"_n.value || 
+          receiver == "everipediaiq"_n.value
+        )
+      )
+      eosio::execute_action( eosio::name(receiver), eosio::name(code), &daiqcontract::deposit );
    if ( code == receiver )
       switch ( action ) {
-         EOSIO_DISPATCH_HELPER( daiq, /*(give)(test)*/(open)(close)(shut)(lock)(bail)(draw)(wipe)(settle)(vote)(propose)(referended)(liquify)(upfeed)(withdraw) )
+         EOSIO_DISPATCH_HELPER( daiqcontract, /*(give)(test)*/(open)(close)(shut)(lock)(bail)(draw)(wipe)(settle)(vote)(propose)(referended)(liquify)(upfeed)(withdraw) )
       }
 }

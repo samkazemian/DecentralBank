@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu Mar 14 14:22:19 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu Mar 14 18:30:18 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -409,16 +409,6 @@
             ]
         },
         {
-            "name": "test",
-            "base": "",
-            "fields": [
-                {
-                    "name": "owner",
-                    "type": "name"
-                }
-            ]
-        },
-        {
             "name": "upfeed",
             "base": "",
             "fields": [
@@ -562,11 +552,6 @@
         {
             "name": "shut",
             "type": "shut",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "test",
-            "type": "test",
             "ricardian_contract": ""
         },
         {

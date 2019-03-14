@@ -16,7 +16,7 @@ using namespace eosio;
 using std::make_tuple;
 using std::string;
 
-CONTRACT daiq : public contract 
+CONTRACT daiqcontract : public contract 
 {  using contract::contract;
    
    public:

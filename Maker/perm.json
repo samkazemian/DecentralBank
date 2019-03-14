@@ -9,7 +9,7 @@
     "accounts": [
       {
         "permission": {
-          "actor": "daiq",
+          "actor": "daiqcontract",
           "permission": "eosio.code"
         },
         "weight": 1
