@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Mon Mar 11 13:38:13 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu Mar 14 00:39:11 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -101,6 +101,28 @@
             ]
         },
         {
+            "name": "deposit",
+            "base": "",
+            "fields": [
+                {
+                    "name": "from",
+                    "type": "name"
+                },
+                {
+                    "name": "to",
+                    "type": "name"
+                },
+                {
+                    "name": "quantity",
+                    "type": "asset"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                }
+            ]
+        },
+        {
             "name": "draw",
             "base": "",
             "fields": [
@@ -128,7 +150,7 @@
                 },
                 {
                     "name": "price",
-                    "type": "float64"
+                    "type": "asset"
                 },
                 {
                     "name": "stamp",
@@ -137,24 +159,6 @@
                 {
                     "name": "total",
                     "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "give",
-            "base": "",
-            "fields": [
-                {
-                    "name": "giver",
-                    "type": "name"
-                },
-                {
-                    "name": "taker",
-                    "type": "name"
-                },
-                {
-                    "name": "symbl",
-                    "type": "symbol_code"
                 }
             ]
         },
@@ -255,11 +259,11 @@
                     "type": "symbol_code"
                 },
                 {
-                    "name": "cltrl",
+                    "name": "clatrl",
                     "type": "symbol_code"
                 },
                 {
-                    "name": "stbl",
+                    "name": "stabl",
                     "type": "symbol_code"
                 },
                 {
@@ -271,6 +275,22 @@
                     "type": "uint64"
                 },
                 {
+                    "name": "pen",
+                    "type": "uint64"
+                },
+                {
+                    "name": "fee",
+                    "type": "uint64"
+                },
+                {
+                    "name": "beg",
+                    "type": "uint64"
+                },
+                {
+                    "name": "liq",
+                    "type": "uint64"
+                },
+                {
                     "name": "tau",
                     "type": "uint32"
                 },
@@ -279,20 +299,8 @@
                     "type": "uint32"
                 },
                 {
-                    "name": "pen",
-                    "type": "float64"
-                },
-                {
-                    "name": "fee",
-                    "type": "float64"
-                },
-                {
-                    "name": "beg",
-                    "type": "float64"
-                },
-                {
-                    "name": "liq",
-                    "type": "float64"
+                    "name": "feeder",
+                    "type": "name"
                 }
             ]
         },
@@ -339,8 +347,12 @@
             "base": "",
             "fields": [
                 {
-                    "name": "beg",
-                    "type": "float64"
+                    "name": "live",
+                    "type": "bool"
+                },
+                {
+                    "name": "last_vote",
+                    "type": "uint32"
                 },
                 {
                     "name": "tau",
@@ -349,6 +361,10 @@
                 {
                     "name": "ttl",
                     "type": "uint32"
+                },
+                {
+                    "name": "feeder",
+                    "type": "name"
                 },
                 {
                     "name": "cdp_type",
@@ -363,16 +379,24 @@
                     "type": "uint64"
                 },
                 {
+                    "name": "stability_fee",
+                    "type": "uint64"
+                },
+                {
+                    "name": "beg",
+                    "type": "uint64"
+                },
+                {
                     "name": "penalty_ratio",
-                    "type": "float64"
+                    "type": "uint64"
                 },
                 {
                     "name": "liquid8_ratio",
-                    "type": "float64"
+                    "type": "uint64"
                 },
                 {
-                    "name": "stability_fee",
-                    "type": "float64"
+                    "name": "fee_balance",
+                    "type": "asset"
                 },
                 {
                     "name": "total_collateral",
@@ -381,36 +405,6 @@
                 {
                     "name": "total_stablecoin",
                     "type": "asset"
-                },
-                {
-                    "name": "live",
-                    "type": "bool"
-                },
-                {
-                    "name": "last_veto",
-                    "type": "uint32"
-                }
-            ]
-        },
-        {
-            "name": "transfer",
-            "base": "",
-            "fields": [
-                {
-                    "name": "from",
-                    "type": "name"
-                },
-                {
-                    "name": "to",
-                    "type": "name"
-                },
-                {
-                    "name": "quantity",
-                    "type": "asset"
-                },
-                {
-                    "name": "memo",
-                    "type": "string"
                 }
             ]
         },
@@ -418,6 +412,18 @@
             "name": "upfeed",
             "base": "",
             "fields": [
+                {
+                    "name": "feeder",
+                    "type": "name"
+                },
+                {
+                    "name": "price",
+                    "type": "asset"
+                },
+                {
+                    "name": "cdp_type",
+                    "type": "symbol_code"
+                },
                 {
                     "name": "symbl",
                     "type": "symbol_code"
@@ -467,6 +473,28 @@
                     "type": "asset"
                 }
             ]
+        },
+        {
+            "name": "withdraw",
+            "base": "",
+            "fields": [
+                {
+                    "name": "from",
+                    "type": "name"
+                },
+                {
+                    "name": "to",
+                    "type": "name"
+                },
+                {
+                    "name": "quantity",
+                    "type": "asset"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
+                }
+            ]
         }
     ],
     "types": [],
@@ -482,13 +510,13 @@
             "ricardian_contract": ""
         },
         {
-            "name": "draw",
-            "type": "draw",
+            "name": "deposit",
+            "type": "deposit",
             "ricardian_contract": ""
         },
         {
-            "name": "give",
-            "type": "give",
+            "name": "draw",
+            "type": "draw",
             "ricardian_contract": ""
         },
         {
@@ -527,11 +555,6 @@
             "ricardian_contract": ""
         },
         {
-            "name": "transfer",
-            "type": "transfer",
-            "ricardian_contract": ""
-        },
-        {
             "name": "upfeed",
             "type": "upfeed",
             "ricardian_contract": ""
@@ -544,6 +567,11 @@
         {
             "name": "wipe",
             "type": "wipe",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "withdraw",
+            "type": "withdraw",
             "ricardian_contract": ""
         }
     ],

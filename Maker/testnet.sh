@@ -79,15 +79,15 @@ echo "=== Opening CDP/Balances  ==="
 # on first run, when given cdp type doesn't exist yet, 
 # "open" will only pre-fund $USER_1 with voting tokens
 # and trigger an assert without executing to completion
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT open '["$USER_1", "FUD", "$USER_1"]' -p $USER_1
+# cleos --url https://jungle.eosio.cr:443 push action $CONTRACT open '["$USER_1", "FUD", "$USER_1"]' -p $USER_1
 
 # verify that balances have entry for tracking $USER_1's tokens
-cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "VTO" accounts # verify first run
+cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "IQ" accounts # verify first run
 
 # verify second run
-cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "USD" accounts
-cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "EOS" accounts
-cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" cdp
+# cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "USD" accounts
+# cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "EOS" accounts
+# cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" cdp
 
 #=================================================================================#
 # SHUT...uncomment all other actions below to test this
@@ -101,10 +101,10 @@ cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" cdp
 # PROPOSE
 echo "=== Proposing new CDP type  ==="
 
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT propose '["$USER_1", "FUD", "EOS", "USD", 2000, 2000000000, 30, 5, 0.5, 0.1, 0.20, 1.5]' -p $USER_1
+cleos --url https://jungle.eosio.cr:443 push action $CONTRACT propose '["rick", "FUD", "EOS", "USD", 2000, 2000000000, 50, 10, 20, 150, 30, 5, "dick"]' -p $USER_1
 
 #propose global settlement 
-#cleos --url https://jungle.eosio.cr:443 push action $CONTRACT propose '["rick", "FUD", "EOS", "USD", 0, 0, 0, 0, 0, 0, 0, 0]' -p rick
+#cleos --url https://jungle.eosio.cr:443 push action $CONTRACT propose '["rick", "FUD", "EOS", "USD", 0, 0, 0, 0, 0, 0, 0, 0, "dick"]' -p rick
 
 # verify that stats have temporary entry for storing $USER_1's proposed cdp type
 cleos --url https://jungle.eosio.cr:443 get table $CONTRACT $USER_1 stat
@@ -113,10 +113,10 @@ cleos --url https://jungle.eosio.cr:443 get table $CONTRACT $USER_1 stat
 # VOTE
 echo "=== Voting FOR proposal ===" 
 
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT vote '["$USER_1", "FUD", false, "0.0001 VTO" ]' -p $USER_1
+cleos --url https://jungle.eosio.cr:443 push action $CONTRACT vote '["$USER_1", "FUD", false, "0.001 IQ" ]' -p $USER_1
 
 # vote against the proposal, for testing tie
-#cleos --url https://jungle.eosio.cr:443 push action $CONTRACT vote '["$USER_1", "FUD", true, "0.0001 VTO" ]' -p $USER_1
+#cleos --url https://jungle.eosio.cr:443 push action $CONTRACT vote '["$USER_1", "FUD", true, "0.001 IQ" ]' -p $USER_1
 
 # verify that balances have entry for tracking $USER_1's vote
 cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" accounts
@@ -130,7 +130,7 @@ sleep 10
 #cleos --url https://jungle.eosio.cr:443 push action $CONTRACT referended '["$USER_1", "FUD"]' -p daiq
 
 # for tie
-#cleos --url https://jungle.eosio.cr:443 push action $CONTRACT vote '["$USER_1", "FUD", true, "0.0002 VTO" ]' -p $USER_1
+#cleos --url https://jungle.eosio.cr:443 push action $CONTRACT vote '["$USER_1", "FUD", true, "0.001 IQ" ]' -p $USER_1
 #sleep 10
 
 # verify that the vote tokens were refunded to $USER_1 after referended
@@ -163,11 +163,11 @@ cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" cdp
 # CREATE PRICE FEEDS
 echo "=== Make price go up ==="
 
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT upfeed '["EOS", false]' -f -p daiq
-# create price feed for VTO and FUD (1:1)
+cleos --url https://jungle.eosio.cr:443 push action $CONTRACT upfeed '["dick", "1.00 USD", "FUD", "EOS"]' -f -p dick
+# create price feed for IQ and FUD (1:1)
 echo "=== Init a price feed for VTO ==="
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT upfeed '["VTO", false]' -f -p daiq
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT upfeed '["USD", false]' -f -p daiq
+cleos --url https://jungle.eosio.cr:443 push action $CONTRACT upfeed '["dick", "1.00 USD", "FUD", "IQ"]' -f -p daiq
+cleos --url https://jungle.eosio.cr:443 push action $CONTRACT upfeed '["dick", "1.00 USD", "FUD", "USD"]' -f -p daiq
 
 # verify that price was updated
 cleos --url https://jungle.eosio.cr:443 get table $CONTRACT $CONTRACT feed
@@ -198,7 +198,7 @@ cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "USD" accounts
 # WIPE 
 echo "=== Push Dai ==="
 
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT wipe '["$USER_1", "FUD", "2.00 USD", "0.0001 VTO"]' -p $USER_1
+cleos --url https://jungle.eosio.cr:443 push action $CONTRACT wipe '["$USER_1", "FUD", "2.00 USD", "0.001 IQ"]' -p $USER_1
 
 # verify that stabl amount was pushed
 cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" cdp
@@ -220,7 +220,7 @@ cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "EOS" accounts
 # UPDATE EOS PRICE FEED - DOWN
 echo "=== First, make price go down ==="
 
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT upfeed '["EOS", true]' -f -p daiq
+cleos --url https://jungle.eosio.cr:443 push action $CONTRACT upfeed '["dick", "0.01 USD", "FUD", "EOS"]' -f -p daiq
 
 #=================================================================================#
 # LIQUIFY
@@ -235,7 +235,7 @@ cleos --url https://jungle.eosio.cr:443 push action $CONTRACT liquify '["$USER_2
 sleep 1
 cleos --url https://jungle.eosio.cr:443 push action $CONTRACT liquify '["$USER_2", "$USER_1", "FUD", "2.75 USD"]' -p $USER_2
 
-# wait for round to expire and switch to selling off VTO for the remaining balance
+# wait for round to expire and switch to selling off IQ for the remaining balance
 echo "=== First round auction done, waiting for round to expire... ==="
 cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" cdp
 sleep 5
@@ -249,20 +249,20 @@ echo "=== Second round auction mid ==="
 
 #cleos --url https://jungle.eosio.cr:443 push action $CONTRACT liquify '["$USER_2", "$USER_1", "FUD", "1.00 USD"]' -p $USER_2
 
-# auction covered more than the cdp debt, proceed to take bids in VTO for the diff
+# auction covered more than the cdp debt, proceed to take bids in IQ for the diff
 # echo "=== Second round auction done, waiting for round to expire... ==="
 # cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" cdp
 # sleep 5
 
-# cleos --url https://jungle.eosio.cr:443 push action $CONTRACT liquify '["$USER_2", "$USER_1", "FUD", "0.2000 VTO"]' -p $USER_2
+# cleos --url https://jungle.eosio.cr:443 push action $CONTRACT liquify '["$USER_2", "$USER_1", "FUD", "0.200 IQ"]' -p $USER_2
 # sleep 1
-# cleos --url https://jungle.eosio.cr:443 push action $CONTRACT liquify '["$USER_2", "$USER_1", "FUD", "0.4000 VTO"]' -p $USER_2
+# cleos --url https://jungle.eosio.cr:443 push action $CONTRACT liquify '["$USER_2", "$USER_1", "FUD", "0.400 IQ"]' -p $USER_2
 # sleep 1
 
 # echo "=== Third round auction mid ==="
 # cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" cdp
 
-# cleos --url https://jungle.eosio.cr:443 push action $CONTRACT liquify '["$USER_2", "$USER_1", "FUD", "0.5000 VTO"]' -p $USER_2
+# cleos --url https://jungle.eosio.cr:443 push action $CONTRACT liquify '["$USER_2", "$USER_1", "FUD", "0.500 IQ"]' -p $USER_2
 
 # echo "=== Third round auction done, balance closed ==="
 
@@ -272,7 +272,7 @@ cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" bid
 #verify $USER_1's balances after liquidation
 cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "USD" accounts
 cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "EOS" accounts
-cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "VTO" accounts
+cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "IQ" accounts
 
 #=================================================================================#
 # SETTLE
