@@ -1,14 +1,14 @@
 
-###### Future note: some of the information herein should be apt for re-organization into the relevant Ricardian clauses of the DaIQ contract ABI
+###### Future note: some of the information herein should be apt for re-organization into the relevant Ricardian clauses of the daiqcontract contract ABI
 
 # Design Decisions 
 
 * If you'd like your CDP to dip below the agreed upon liqidation ratio of your CDP's type, via one of the relevant actions (draw or bail), then TOO BAD because you won't be permitted (you'll hit an assertion).
 * If you'd like to liquidate your own CDP in the event of significant price slippage, then TOO BAD because that would let you print free money and we won't have that kind of behavior here (unless you collude with another account).
 
-# Differences between cdpEOS (aka DaIQ) and cdpETH (aka MakerDAO)
+# Differences between cdpEOS (aka daiqcontract) and cdpETH (aka MakerDAO)
 
-DaIQ successfully implements multi-collateral CDPs by accepting any eosio.token, and the entire protocol is implemented via only 15 distinct functions, and less than 800 SLOC. 
+daiqcontract successfully implements multi-collateral CDPs by accepting any eosio.token, and the entire protocol is implemented via only 15 distinct functions, and a little over 700 SLOC. 
 
 The major discrepancy between the two protocols is in how
 liquidation auctions, stability fees, and governance are handled. For instance, we enforce a constraint where the owner of a CDP cannot liquify their own CDP.

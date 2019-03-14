@@ -129,7 +129,7 @@ echo "=== Waiting for referendum... ==="
 sleep 10
 
 # or call referended manually...
-#cleos --url https://jungle.eosio.cr:443 push action $CONTRACT referended '["$USER_1", "FUD"]' -p daiq
+#cleos --url https://jungle.eosio.cr:443 push action $CONTRACT referended '["$USER_1", "FUD"]' -p daiqcontract
 
 # for tie
 #cleos --url https://jungle.eosio.cr:443 push action $CONTRACT vote '["$USER_1", "FUD", true, "0.001 IQ" ]' -p $USER_1
@@ -149,8 +149,8 @@ echo "=== Make price go up ==="
 cleos --url https://jungle.eosio.cr:443 push action $CONTRACT upfeed '["dick", "1.00 USD", "FUD", "EOS"]' -f -p dick
 # create price feed for IQ and FUD (1:1)
 echo "=== Init a price feed for VTO ==="
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT upfeed '["dick", "1.00 USD", "FUD", "IQ"]' -f -p daiq
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT upfeed '["dick", "1.00 USD", "FUD", "USD"]' -f -p daiq
+cleos --url https://jungle.eosio.cr:443 push action $CONTRACT upfeed '["dick", "1.00 USD", "FUD", "IQ"]' -f -p daiqcontract
+cleos --url https://jungle.eosio.cr:443 push action $CONTRACT upfeed '["dick", "1.00 USD", "FUD", "USD"]' -f -p daiqcontract
 
 # verify that price was updated
 cleos --url https://jungle.eosio.cr:443 get table $CONTRACT $CONTRACT feed
@@ -222,7 +222,7 @@ cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "EOS" accounts
 # UPDATE EOS PRICE FEED - DOWN
 echo "=== First, make price go down ==="
 
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT upfeed '["dick", "0.01 USD", "FUD", "EOS"]' -f -p daiq
+cleos --url https://jungle.eosio.cr:443 push action $CONTRACT upfeed '["dick", "0.01 USD", "FUD", "EOS"]' -f -p daiqcontract
 
 #=================================================================================#
 # LIQUIFY

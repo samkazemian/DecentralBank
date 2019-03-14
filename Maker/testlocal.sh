@@ -15,7 +15,7 @@ COMPILE="./compile.sh"
 DEPLOY="./deploy.sh"
 
 # Contract accounts
-CONTRACT="daiq"
+CONTRACT="daiqcontract"
 
 # Wallet name prereq... 
 # set WALLET environment variable via: 
@@ -139,7 +139,7 @@ echo "=== Waiting for referendum... ==="
 sleep 10
 
 # or call referended manually...
-#cleos push action $CONTRACT referended '["rick", "FUD"]' -p daiq
+#cleos push action $CONTRACT referended '["rick", "FUD"]' -p daiqcontract
 
 # for tie
 #cleos push action $CONTRACT vote '["rick", "FUD", true, "0.002 IQ" ]' -p rick
@@ -157,8 +157,8 @@ cleos get table $CONTRACT $CONTRACT stat
 echo "=== Creating price feeds ==="
 
 cleos push action $CONTRACT upfeed '["dick", "1.00 USD", "FUD", "EOS"]' -f -p dick
-cleos push action $CONTRACT upfeed '["daiq", "1.00 USD", "FUD", "IQ"]' -f -p daiq
-cleos push action $CONTRACT upfeed '["daiq", "1.00 USD", "FUD", "USD"]' -f -p daiq
+cleos push action $CONTRACT upfeed '["daiqcontract", "1.00 USD", "FUD", "IQ"]' -f -p daiqcontract
+cleos push action $CONTRACT upfeed '["daiqcontract", "1.00 USD", "FUD", "USD"]' -f -p daiqcontract
 
 # verify that price was updated
 cleos get table $CONTRACT $CONTRACT feed
@@ -289,7 +289,7 @@ cleos get table $CONTRACT "IQ" accounts
 # SETTLE
 echo "=== Global settlement ==="
 
-cleos push action $CONTRACT settle '["FUD"]' -p daiq
+cleos push action $CONTRACT settle '["FUD"]' -p daiqcontract
 #verify that FUD cdp type is not live
 cleos get table $CONTRACT $CONTRACT stat
 
