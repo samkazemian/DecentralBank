@@ -20,9 +20,10 @@ CONTRACT daiq : public contract
 {  using contract::contract;
    
    public:
+      const eosio::symbol IQSYMBOL = symbol( symbol_code("IQ"), 3 );
       static constexpr uint32_t FEED_FRESH = 300; // seconds in 5 minute period
       static constexpr uint32_t VOTE_PERIOD = 10; //604800; // seconds in a week
-      static constexpr uint32_t SECYR = 31536000; //604800; // seconds in a year
+      static constexpr uint32_t SECYR = 31557600; // seconds in a year on average
       
       /* Global settlement:
        * The system uses the market price of collateral 
@@ -34,11 +35,12 @@ CONTRACT daiq : public contract
        * enactment of a new cdp type, or modification
        * of an existing one.
        */ ACTION propose( name proposer, symbol_code symbl, 
-                          symbol_code cltrl, symbol_code stbl,
+                          symbol_code clatrl, symbol_code stabl,
                           uint64_t max, uint64_t gmax, 
+                          uint64_t pen, uint64_t fee,
+                          uint64_t beg, uint64_t liq, 
                           uint32_t tau, uint32_t ttl,
-                          double pen, double fee,
-                          double beg, double liq  );
+                          name feeder );
 
       /* Take a position (for/against) on a cdp proposal
        */ ACTION vote( name voter, symbol_code symbl, 
@@ -61,7 +63,7 @@ CONTRACT daiq : public contract
       
       /* The owner of an urn can transfer
        * its ownership at any time using give.  
-       */ ACTION give( name giver, name taker, symbol_code symbl );
+       */ //ACTION give( name giver, name taker, symbol_code symbl );
       
       /* Unless CDP is in liquidation, 
        * its owner can use lock to lock
@@ -86,9 +88,9 @@ CONTRACT daiq : public contract
        * plus fee. 
        */ ACTION shut( name owner, symbol_code symbl );
 
-      /* Dummy action to update price feed data
-       * TODO: replace with more robust ORACLE implementation 
-       */ ACTION upfeed( symbol_code symbl );
+      /* Price feed data update action
+       */ ACTION upfeed( name feeder, asset price, 
+                         symbol_code cdp_type, symbol_code symbl );
 
       // Open cdp or initiate balances for account
       ACTION open( name owner, symbol_code symbl, name ram_payer );
@@ -96,7 +98,12 @@ CONTRACT daiq : public contract
       // Close balance of given symbol for account
       ACTION close( name owner, symbol_code symbl );
 
-      ACTION transfer( name    from,
+      ACTION deposit( name    from,
+                      name    to,
+                      asset   quantity,
+                      string  memo );
+      
+      ACTION withdraw( name    from,
                        name    to,
                        asset   quantity,
                        string  memo );
@@ -149,45 +156,41 @@ CONTRACT daiq : public contract
       }; typedef     eosio::multi_index< "prop"_n, prop > props;
 
       TABLE stat 
-      {  double      beg; //minimum bid increase in %
+      {  bool        live = false;
+         uint32_t    last_vote = 0; //for parameter updates
+         
          //auctions will terminate after tau seconds have passed from start
          uint32_t    tau;
          //and after ttl seconds have passed since placement of last bid
          uint32_t    ttl;
          
+         name        feeder; //designated account for providing price feeds
          //CDT Type Symbol e.g...
          //DBEOS / DBKARMA...24*23*22*21*20 = over 5M different variants
          symbol_code cdp_type;   
          //max total stablecoin issuable by all CDPs of this type
          uint64_t    global_ceil;
          uint64_t    debt_ceiling;
-         
-         //by default, 13% of the collateral in the CDP 
-         double      penalty_ratio; //units are tenths of a %
-         //collateral asset units needed per issued stable tokens
-         double      liquid8_ratio;
-         
-         //Total debt owed by CDPs of this type, denominated in debt unit
-         double      stability_fee; //units are APR?
-         
-         //TODO: instead of these two names use extended assets for totals below
-         //name      stabl_contract; //account name of eosio.token for stablecoin
-         //name      clatrl_contract; //account name of eosio.token for collateral
 
+         uint64_t     stability_fee; //units are APR %
+         uint64_t     beg; //minimum bid increase in %
+         //by default, 13% of the collateral in the CDP 
+         uint64_t     penalty_ratio; //units are %
+         //collateral asset units needed per issued stable tokens
+         uint64_t     liquid8_ratio; //units are %
+         
+         asset       fee_balance; //total stability fees paid
          //Symbol and total amount locked as collateral for all CDPs of this type
          asset       total_collateral; 
          //Symbol and total amount of stablecoin in circulation for CDPs of this type
          asset       total_stablecoin;
-
-         bool        live = false;
-         uint32_t    last_veto = 0; //for parameter updates
          
          uint64_t    primary_key()const { return cdp_type.raw(); }
       }; typedef     eosio::multi_index< "stat"_n, stat > stats;
       
       TABLE feed
       {  symbol_code symbl;
-         double      price = 0;
+         asset       price;
          uint32_t    stamp = 0;
          uint64_t    total = 0; //amount in circulation, ie not locked in cdp
          

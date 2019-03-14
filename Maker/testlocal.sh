@@ -89,15 +89,15 @@ echo "=== Opening CDP/Balances  ==="
 # on first run, when given cdp type doesn't exist yet, 
 # "open" will only pre-fund rick with voting tokens
 # and trigger an assert without executing to completion
-cleos push action $CONTRACT open '["rick", "FUD", "rick"]' -p rick
+# cleos push action $CONTRACT open '["rick", "FUD", "rick"]' -p rick
 
 # verify that balances have entry for tracking rick's tokens
-cleos get table $CONTRACT "VTO" accounts # verify first run
+cleos get table $CONTRACT "IQ" accounts # verify first run
 
 # verify second run
-cleos get table $CONTRACT "USD" accounts
-cleos get table $CONTRACT "EOS" accounts
-cleos get table $CONTRACT "FUD" cdp
+# cleos get table $CONTRACT "USD" accounts
+# cleos get table $CONTRACT "EOS" accounts
+# cleos get table $CONTRACT "FUD" cdp
 
 #=================================================================================#
 # SHUT...uncomment all other actions below to test this
@@ -111,10 +111,10 @@ cleos get table $CONTRACT "FUD" cdp
 # PROPOSE
 echo "=== Proposing new CDP type  ==="
 
-cleos push action $CONTRACT propose '["rick", "FUD", "EOS", "USD", 2000, 2000000000, 30, 5, 0.5, 0.1, 0.20, 1.5]' -p rick
+cleos push action $CONTRACT propose '["rick", "FUD", "EOS", "USD", 2000, 2000000000, 50, 10, 20, 150, 30, 5, "dick"]' -p rick
 
 #propose global settlement 
-#cleos push action $CONTRACT propose '["rick", "FUD", "EOS", "USD", 0, 0, 0, 0, 0, 0, 0, 0]' -p rick
+#cleos push action $CONTRACT propose '["rick", "FUD", "EOS", "USD", 0, 0, 0, 0, 0, 0, 0, 0, "dick"]' -p rick
 
 # verify that stats have temporary entry for storing rick's proposed cdp type
 cleos get table $CONTRACT rick stat
@@ -123,10 +123,10 @@ cleos get table $CONTRACT rick stat
 # VOTE
 echo "=== Voting FOR proposal ===" 
 
-cleos push action $CONTRACT vote '["rick", "FUD", false, "0.0001 VTO" ]' -p rick
+cleos push action $CONTRACT vote '["rick", "FUD", false, "0.001 IQ" ]' -p rick
 
 # vote against the proposal, for testing tie
-#cleos push action $CONTRACT vote '["rick", "FUD", true, "0.0001 VTO" ]' -p rick
+#cleos push action $CONTRACT vote '["rick", "FUD", true, "0.001 IQ" ]' -p rick
 
 # verify that balances have entry for tracking rick's vote
 cleos get table $CONTRACT "FUD" accounts
@@ -140,7 +140,7 @@ sleep 10
 #cleos push action $CONTRACT referended '["rick", "FUD"]' -p daiq
 
 # for tie
-#cleos push action $CONTRACT vote '["rick", "FUD", true, "0.0002 VTO" ]' -p rick
+#cleos push action $CONTRACT vote '["rick", "FUD", true, "0.002 IQ" ]' -p rick
 #sleep 10
 
 # verify that the vote tokens were refunded to rick after referended
@@ -156,16 +156,16 @@ cleos push action $CONTRACT open '["rick", "FUD", "rick"]' -p rick
 
 #=================================================================================#
 # GIVE
-echo "=== Giving CDP  to dick==="
+#echo "=== Giving CDP  to dick==="
 
-cleos push action $CONTRACT give '["rick", "dick" "FUD"]' -p rick
+#cleos push action $CONTRACT give '["rick", "dick" "FUD"]' -p rick
 # verify that rick's cdp was transfered to dick
-cleos get table $CONTRACT "FUD" cdp
+#cleos get table $CONTRACT "FUD" cdp
 
 
 echo "=== Giving CDP back to rick  ==="
-cleos push action $CONTRACT open '["dick", "FUD", "dick"]' -p dick
-cleos push action $CONTRACT give '["dick", "rick" "FUD"]' -p dick
+#cleos push action $CONTRACT open '["dick", "FUD", "dick"]' -p dick
+#cleos push action $CONTRACT give '["dick", "rick" "FUD"]' -p dick
 # verify that dick's cdp was transfered back to rick
 cleos get table $CONTRACT "FUD" cdp
 
@@ -173,9 +173,9 @@ cleos get table $CONTRACT "FUD" cdp
 # CREATE PRICE FEEDS
 echo "=== Creating price feeds ==="
 
-cleos push action $CONTRACT upfeed '["EOS"]' -f -p daiq
-cleos push action $CONTRACT upfeed '["VTO"]' -f -p daiq
-cleos push action $CONTRACT upfeed '["USD"]' -f -p daiq
+cleos push action $CONTRACT upfeed '["dick", "1.00 USD", "FUD", "EOS"]' -f -p dick
+cleos push action $CONTRACT upfeed '["daiq", "1.00 USD", "FUD", "IQ"]' -f -p daiq
+cleos push action $CONTRACT upfeed '["daiq", "1.00 USD", "FUD", "USD"]' -f -p daiq
 
 # verify that price was updated
 cleos get table $CONTRACT $CONTRACT feed
@@ -206,7 +206,7 @@ cleos get table $CONTRACT "USD" accounts
 # WIPE 
 echo "=== Push Dai ==="
 
-cleos push action $CONTRACT wipe '["rick", "FUD", "2.00 USD", "0.0001 VTO"]' -p rick
+cleos push action $CONTRACT wipe '["rick", "FUD", "2.00 USD", "0.001 IQ"]' -p rick
 
 # verify that stabl amount was pushed
 cleos get table $CONTRACT "FUD" cdp
@@ -228,7 +228,7 @@ cleos get table $CONTRACT "EOS" accounts
 # UPDATE EOS PRICE FEED - DOWN
 echo "=== Make EOS price go down ==="
 
-cleos push action $CONTRACT upfeed '["EOS"]' -f -p daiq
+cleos push action $CONTRACT upfeed '["dick", "0.01 USD", "FUD", "EOS"]' -f -p dick
 
 #=================================================================================#
 # LIQUIFY
@@ -243,7 +243,7 @@ cleos push action $CONTRACT liquify '["dick", "rick", "FUD", "2.25 USD"]' -p dic
 sleep 1
 cleos push action $CONTRACT liquify '["dick", "rick", "FUD", "2.75 USD"]' -p dick
 
-# wait for round to expire and switch to selling off VTO for the remaining balance
+# wait for round to expire and switch to selling off IQ for the remaining balance
 echo "=== First round auction done, waiting for round to expire... ==="
 cleos get table $CONTRACT "FUD" cdp
 sleep 5
@@ -257,20 +257,20 @@ echo "=== Second round auction mid ==="
 
 #cleos push action $CONTRACT liquify '["dick", "rick", "FUD", "1.00 USD"]' -p dick
 
-# auction covered more than the cdp debt, proceed to take bids in VTO for the diff
+# auction covered more than the cdp debt, proceed to take bids in IQ for the diff
 # echo "=== Second round auction done, waiting for round to expire... ==="
 # cleos get table $CONTRACT "FUD" cdp
 # sleep 5
 
-# cleos push action $CONTRACT liquify '["dick", "rick", "FUD", "0.2000 VTO"]' -p dick
+# cleos push action $CONTRACT liquify '["dick", "rick", "FUD", "0.200 IQ"]' -p dick
 # sleep 1
-# cleos push action $CONTRACT liquify '["dick", "rick", "FUD", "0.4000 VTO"]' -p dick
+# cleos push action $CONTRACT liquify '["dick", "rick", "FUD", "0.400 IQ"]' -p dick
 # sleep 1
 
 # echo "=== Third round auction mid ==="
 # cleos get table $CONTRACT "FUD" cdp
 
-# cleos push action $CONTRACT liquify '["dick", "rick", "FUD", "0.5000 VTO"]' -p dick
+# cleos push action $CONTRACT liquify '["dick", "rick", "FUD", "0.500 IQ"]' -p dick
 
 # echo "=== Third round auction done, balance closed ==="
 
@@ -280,7 +280,7 @@ cleos get table $CONTRACT "FUD" bid
 #verify rick's balances after liquidation
 cleos get table $CONTRACT "USD" accounts
 cleos get table $CONTRACT "EOS" accounts
-cleos get table $CONTRACT "VTO" accounts
+cleos get table $CONTRACT "IQ" accounts
 
 #=================================================================================#
 # SETTLE

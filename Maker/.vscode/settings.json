@@ -7,6 +7,9 @@
         "system_error": "cpp",
         "array": "cpp",
         "string_view": "cpp",
-        "initializer_list": "cpp"
+        "initializer_list": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "type_traits": "cpp"
     }
 }
