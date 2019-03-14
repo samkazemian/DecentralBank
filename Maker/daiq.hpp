@@ -20,11 +20,16 @@ CONTRACT daiq : public contract
 {  using contract::contract;
    
    public:
-      const eosio::symbol IQSYMBOL = symbol( symbol_code("IQ"), 3 );
+      const eosio::symbol IQSYMBOL = symbol( "IQ", 3 );
       static constexpr uint32_t FEED_FRESH = 300; // seconds in 5 minute period
       static constexpr uint32_t VOTE_PERIOD = 10; //604800; // seconds in a week
       static constexpr uint32_t SECYR = 31557600; // seconds in a year on average
       
+      //ACTION test ( name owner );
+      /* The owner of an urn can transfer
+       * its ownership at any time using give.  
+       */ //ACTION give( name giver, name taker, symbol_code symbl );
+
       /* Global settlement:
        * The system uses the market price of collateral 
        * at the time of settlement to compute how much
@@ -60,10 +65,6 @@ CONTRACT daiq : public contract
        * many Dai as you issued. The issued Dai is thus taken out of circulation. 
        */ ACTION liquify( name bidder, name owner, 
                           symbol_code symbl, asset bidamt );
-      
-      /* The owner of an urn can transfer
-       * its ownership at any time using give.  
-       */ //ACTION give( name giver, name taker, symbol_code symbl );
       
       /* Unless CDP is in liquidation, 
        * its owner can use lock to lock
@@ -107,7 +108,7 @@ CONTRACT daiq : public contract
                        name    to,
                        asset   quantity,
                        string  memo );
-      
+
       // unchanged from eosio.token
       static asset get_balance( name token_contract_account, name owner, symbol_code sym_code )
       {  accounts accountstable( token_contract_account, owner.value );

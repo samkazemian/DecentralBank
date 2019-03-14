@@ -77,9 +77,11 @@ echo "=== DEPLOYING CONTRACTS ==="
 echo "=== Opening CDP/Balances  ==="
 
 # on first run, when given cdp type doesn't exist yet, 
-# "open" will only pre-fund $USER_1 with voting tokens
-# and trigger an assert without executing to completion
-# cleos --url https://jungle.eosio.cr:443 push action $CONTRACT open '["$USER_1", "FUD", "$USER_1"]' -p $USER_1
+# "test" will simply pre-fund accounts with tokens
+
+#cleos --url https://jungle.eosio.cr:443 push action $CONTRACT test '["rick"]' -p rick
+#cleos --url https://jungle.eosio.cr:443 push action $CONTRACT test '["dick"]' -p dick
+
 
 # verify that balances have entry for tracking $USER_1's tokens
 cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "IQ" accounts # verify first run
@@ -140,25 +142,6 @@ cleos --url https://jungle.eosio.cr:443 get table $CONTRACT $CONTRACT prop
 # verify that stat entry for this cdp type was referended into existence
 cleos --url https://jungle.eosio.cr:443 get table $CONTRACT $CONTRACT stat
 
-# on second run, "open" will create a cdp for $USER_1 of given type
-# and create relevant balance entries if they dont exist
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT open '["$USER_1", "FUD", "$USER_1"]' -p $USER_1
-
-#=================================================================================#
-# GIVE
-echo "=== Giving CDP  to USER_2 ==="
-
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT give '["$USER_1", "$USER_2" "FUD"]' -p $USER_1
-# verify that $USER_1's cdp was transfered to $USER_2
-cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" cdp
-
-
-echo "=== Giving CDP back to USER_1  ==="
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT open '["$USER_2", "FUD", "$USER_2"]' -p $USER_2
-cleos --url https://jungle.eosio.cr:443 push action $CONTRACT give '["$USER_2", "$USER_1" "FUD"]' -p $USER_2
-# verify that $USER_2's cdp was transfered back to $USER_1
-cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" cdp
-
 #=================================================================================#
 # CREATE PRICE FEEDS
 echo "=== Make price go up ==="
@@ -171,6 +154,25 @@ cleos --url https://jungle.eosio.cr:443 push action $CONTRACT upfeed '["dick", "
 
 # verify that price was updated
 cleos --url https://jungle.eosio.cr:443 get table $CONTRACT $CONTRACT feed
+
+#=================================================================================#
+# GIVE
+# echo "=== Giving CDP  to USER_2 ==="
+
+#cleos --url https://jungle.eosio.cr:443 push action $CONTRACT give '["$USER_1", "$USER_2" "FUD"]' -p $USER_1
+# verify that $USER_1's cdp was transfered to $USER_2
+#cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" cdp
+
+
+# echo "=== Giving CDP back to USER_1  ==="
+#cleos --url https://jungle.eosio.cr:443 push action $CONTRACT open '["$USER_2", "FUD", "$USER_2"]' -p $USER_2
+#cleos --url https://jungle.eosio.cr:443 push action $CONTRACT give '["$USER_2", "$USER_1" "FUD"]' -p $USER_2
+
+
+# OPEN
+cleos --url https://jungle.eosio.cr:443 push action $CONTRACT open '["$USER_1", "FUD", "$USER_1"]' -p $USER_1
+# verify that $USER_2's cdp was transfered back to $USER_1
+cleos --url https://jungle.eosio.cr:443 get table $CONTRACT "FUD" cdp
 
 #=================================================================================#
 # LOCK
