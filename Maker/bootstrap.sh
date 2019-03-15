@@ -3,87 +3,13 @@
 CYAN='\033[1;36m'
 NC='\033[0m'
 
-trap ctrl_c INT
-function ctrl_c {
-    exit 11;
-}
-
-BOOTSTRAP=0 # 1 if chain bootstrapping (bios, system contract, etc.) is needed, else 0
-RECOMPILE_AND_RESET_EOSIO_CONTRACTS=0
-BUILD=0
-HELP=0
-EOSIO_CONTRACTS_ROOT=/home/rick/eosio.contracts/build/
+EOSIO_CONTRACTS_ROOT=/home/ricardo/Documents/eosio.contracts/build
 NODEOS_HOST="127.0.0.1"
 NODEOS_PROTOCOL="http"
 NODEOS_PORT="8888"
 NODEOS_LOCATION="${NODEOS_PROTOCOL}://${NODEOS_HOST}:${NODEOS_PORT}"
 
 alias cleos="cleos --url=${NODEOS_LOCATION}"
-
-#######################################
-## HELPERS
-
-function balance {
-    cleos get table everipediaiq $1 accounts | jq ".rows[0].balance" | tr -d '"' | awk '{print $1}'
-}
-
-assert ()
-{
-
-    if [ $1 -eq 0 ]; then
-        FAIL_LINE=$( caller | awk '{print $1}')
-        echo -e "Assertion failed. Line $FAIL_LINE:"
-        head -n $FAIL_LINE $BASH_SOURCE | tail -n 1
-        exit 99
-    fi
-}
-
-ipfsgen () {
-    echo -e "Qm$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 44 | head -n 1)"
-}
-
-titlegen () {
-    cat /dev/urandom | tr -dc 'a-z\-' | fold -w 15 | head -n 1
-}
-
-#################################
-
-# Parse args
-OPTIONS=$(getopt -o bsh --long build,bootstrap,help: -n test.sh -- "$@")
-if [ $? != 0 ] ; then echo -e "Failed parsing options." >&2 ; exit 1 ; fi
-eval set -- "$OPTIONS"
-while true; do
-  case "$1" in
-    -h | --help ) HELP=1; shift;;
-    -b | --build ) BUILD=1; shift ;;
-    -s | --bootstrap ) BOOTSTRAP=1; shift ;;
-    -- ) shift; break ;;
-    * ) break ;;
-  esac
-done
-
-if [ $HELP -eq 1 ]; then
-    echo -e "Usage ./test.sh [-b | --build][-s | --bootstrap][-h | --help]";
-    exit 0
-fi
-
-# Don't allow tests on mainnet
-CHAIN_ID=$(cleos get info | jq ".chain_id" | tr -d '"')
-if [ $CHAIN_ID = "aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906" ]; then
-    >&2 echo -e "Cannot run test on mainnet"
-    exit 1
-fi
-
-# Build
-if [ $BUILD -eq 1 ]; then
-    sed -i -e 's/REWARD_INTERVAL = 1800/REWARD_INTERVAL = 5/g' eparticlectr/eparticlectr.hpp
-    sed -i -e 's/DEFAULT_VOTING_TIME = 43200/DEFAULT_VOTING_TIME = 3/g' eparticlectr/eparticlectr.hpp
-    sed -i -e 's/STAKING_DURATION = 21 \* 86400/STAKING_DURATION = 5/g' eparticlectr/eparticlectr.hpp
-    ./build.sh
-    sed -i -e 's/REWARD_INTERVAL = 5/REWARD_INTERVAL = 1800/g' eparticlectr/eparticlectr.hpp
-    sed -i -e 's/DEFAULT_VOTING_TIME = 3/DEFAULT_VOTING_TIME = 43200/g' eparticlectr/eparticlectr.hpp
-    sed -i -e 's/STAKING_DURATION = 5/STAKING_DURATION = 21 \* 86400/g' eparticlectr/eparticlectr.hpp
-fi
 
 ###############################################RICH ADDED###############################################
 if [[ -z "${WALLET}" ]]; then
@@ -103,21 +29,14 @@ if [[ -z "${PASSWORD}" ]]; then
 else
   PASSWORD="${PASSWORD}"
 fi
-# 0) Unlock wallet
-echo "=== UNLOCKING WALLET ==="
-cleos wallet unlock -n $WALLET --password $PASSWORD
+    # 0) Unlock wallet
+    echo "=== UNLOCKING WALLET ==="
+    cleos wallet unlock -n $WALLET --password $PASSWORD
 
-CONTRACT="daiqcontract"
-CONTRACT_WASM="$CONTRACT.wasm"
-CONTRACT_ABI="$CONTRACT.abi"
-#///////////////////////////////////////////////RICH ADDED///////////////////////////////////////////////
+    CONTRACT="daiqcontract"
+    CONTRACT_WASM="$CONTRACT.wasm"
+    CONTRACT_ABI="$CONTRACT.abi"
 
-if [ $BOOTSTRAP -eq 1 ]; then
-    # Create BIOS accounts
-    #rm ~/eosio-wallet/default.wallet
-    #cleos wallet create --to-console
-
-###############################################RICH ADDED###############################################
     OWNER_ACCT="5J3TQGkkiRQBKcg8Gg2a7Kk5a2QAQXsyGrkCnnq4krSSJSUkW12"
     ACTIVE_ACCT="5J3TQGkkiRQBKcg8Gg2a7Kk5a2QAQXsyGrkCnnq4krSSJSUkW12"
     # DAIQ Account public keys
@@ -130,16 +49,16 @@ if [ $BOOTSTRAP -eq 1 ]; then
 
     # EOSIO system-related keys
     echo -e "${CYAN}-----------------------SYSTEM KEYS-----------------------${NC}"
-    cleos wallet import --private-key 5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
-    cleos wallet import --private-key 5JgqWJYVBcRhviWZB3TU1tN9ui6bGpQgrXVtYZtTG2d3yXrDtYX
-    cleos wallet import --private-key 5JjjgrrdwijEUU2iifKF94yKduoqfAij4SKk6X5Q3HfgHMS4Ur6
-    cleos wallet import --private-key 5HxJN9otYmhgCKEbsii5NWhKzVj2fFXu3kzLhuS75upN5isPWNL
-    cleos wallet import --private-key 5JNHjmgWoHiG9YuvX2qvdnmToD2UcuqavjRW5Q6uHTDtp3KG3DS
-    cleos wallet import --private-key 5JZkaop6wjGe9YY8cbGwitSuZt8CjRmGUeNMPHuxEDpYoVAjCFZ
-    cleos wallet import --private-key 5Hroi8WiRg3by7ap3cmnTpUoqbAbHgz3hGnGQNBYFChswPRUt26
-    cleos wallet import --private-key 5JbMN6pH5LLRT16HBKDhtFeKZqe7BEtLBpbBk5D7xSZZqngrV8o
-    cleos wallet import --private-key 5JUoVWoLLV3Sj7jUKmfE8Qdt7Eo7dUd4PGZ2snZ81xqgnZzGKdC
-    cleos wallet import --private-key 5Ju1ree2memrtnq8bdbhNwuowehZwZvEujVUxDhBqmyTYRvctaF
+    cleos wallet import -n $WALLET --private-key 5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
+    cleos wallet import -n $WALLET --private-key 5JgqWJYVBcRhviWZB3TU1tN9ui6bGpQgrXVtYZtTG2d3yXrDtYX
+    cleos wallet import -n $WALLET --private-key 5JjjgrrdwijEUU2iifKF94yKduoqfAij4SKk6X5Q3HfgHMS4Ur6
+    cleos wallet import -n $WALLET --private-key 5HxJN9otYmhgCKEbsii5NWhKzVj2fFXu3kzLhuS75upN5isPWNL
+    cleos wallet import -n $WALLET --private-key 5JNHjmgWoHiG9YuvX2qvdnmToD2UcuqavjRW5Q6uHTDtp3KG3DS
+    cleos wallet import -n $WALLET --private-key 5JZkaop6wjGe9YY8cbGwitSuZt8CjRmGUeNMPHuxEDpYoVAjCFZ
+    cleos wallet import -n $WALLET --private-key 5Hroi8WiRg3by7ap3cmnTpUoqbAbHgz3hGnGQNBYFChswPRUt26
+    cleos wallet import -n $WALLET --private-key 5JbMN6pH5LLRT16HBKDhtFeKZqe7BEtLBpbBk5D7xSZZqngrV8o
+    cleos wallet import -n $WALLET --private-key 5JUoVWoLLV3Sj7jUKmfE8Qdt7Eo7dUd4PGZ2snZ81xqgnZzGKdC
+    cleos wallet import -n $WALLET --private-key 5Ju1ree2memrtnq8bdbhNwuowehZwZvEujVUxDhBqmyTYRvctaF
 
     # Create system accounts
     echo -e "${CYAN}-----------------------SYSTEM ACCOUNTS-----------------------${NC}"
@@ -153,21 +72,7 @@ if [ $BOOTSTRAP -eq 1 ]; then
     cleos create account eosio eosio.token EOS7JPVyejkbQHzE9Z4HwewNzGss11GB21NPkwTX2MQFmruYFqGXm
     cleos create account eosio eosio.vpay EOS6szGbnziz224T1JGoUUFu2LynVG72f8D3UVAS25QgwawdH983U
 
-    if [ $RECOMPILE_EOSIO_CONTRACTS -eq 1 ]; then
-        # Compile the contracts manually due to an error in the build.sh script in eosio.contracts
-        echo -e "${CYAN}-----------------------RECOMPILING CONTRACTS-----------------------${NC}"
-        cd "${EOSIO_CONTRACTS_ROOT}/eosio.token"
-        eosio-cpp -I ./include -o ./eosio.token.wasm ./src/eosio.token.cpp --abigen
-        cd "${EOSIO_CONTRACTS_ROOT}/eosio.msig"
-        eosio-cpp -I ./include -o ./eosio.msig.wasm ./src/eosio.msig.cpp --abigen
-        cd "${EOSIO_CONTRACTS_ROOT}/eosio.bios"
-        eosio-cpp -I ./include -o ./eosio.bios.wasm ./src/eosio.bios.cpp --abigen
-        cd "${EOSIO_CONTRACTS_ROOT}/eosio.system"
-        eosio-cpp -I ./include -I "${EOSIO_CONTRACTS_ROOT}/eosio.token/include" -o ./eosio.system.wasm ./src/eosio.system.cpp --abigen
-        cd "${EOSIO_CONTRACTS_ROOT}/eosio.wrap"
-        eosio-cpp -I ./include -o ./eosio.wrap.wasm ./src/eosio.wrap.cpp --abigen
-    fi
-
+    
     # Bootstrap new system contracts
     echo -e "${CYAN}-----------------------SYSTEM CONTRACTS-----------------------${NC}"
     cleos set contract eosio.token $EOSIO_CONTRACTS_ROOT/eosio.token/
@@ -190,36 +95,29 @@ if [ $BOOTSTRAP -eq 1 ]; then
 
     # Import user keys
     echo -e "${CYAN}-----------------------USER KEYS-----------------------${NC}"
-    cleos wallet import --private-key 5JVvgRBGKXSzLYMHgyMFH5AHjDzrMbyEPRdj8J6EVrXJs8adFpK # everipediaiq
+    cleos wallet import -n $WALLET --private-key 5JVvgRBGKXSzLYMHgyMFH5AHjDzrMbyEPRdj8J6EVrXJs8adFpK # everipediaiq
    
-    cleos wallet import --private-key 5J9UYL9VcDfykAB7mcx9nFfRKki5djG9AXGV6DJ8d5XPYDJDyUy # eptestusersa
-    cleos wallet import --private-key 5HtnwWCbMpR1ATYoXY4xb1E4HAU9mzGvDrawyK5May68cYrJR7r # eptestusersb
-    cleos wallet import --private-key 5Jjx6z5SJ7WhVU2bgG2si6Y1up1JTXHj7qhC9kKUXPXb1K1Xnj6 # eptestusersc
-    cleos wallet import --private-key 5HyQUNxE9T83RLiS9HdZeJck5WRqNSSzVztZ3JwYvkYPrG8Ca1U # eptestusersd
-    cleos wallet import --private-key 5KZC9soBHR4AF1kt93pCNfjSLPJN9y51AKR4r4vvPsiPvFdLG3t # eptestuserse
-    cleos wallet import --private-key 5K9dtgQXBCggrMugEAxsBfcUZ8mmnbDpiZZYt7RvoxwChqiFdS1 # eptestusersf
-    cleos wallet import --private-key 5JU8qQMV3cD4HzA14meGEBWwWxNWAk9QAebSkQotv4wXHkKncNh # eptestusersg
-
+    cleos wallet import -n $WALLET --private-key 5J9UYL9VcDfykAB7mcx9nFfRKki5djG9AXGV6DJ8d5XPYDJDyUy # eptestusersa
+    cleos wallet import -n $WALLET --private-key 5HtnwWCbMpR1ATYoXY4xb1E4HAU9mzGvDrawyK5May68cYrJR7r # eptestusersb
+    cleos wallet import -n $WALLET --private-key 5Jjx6z5SJ7WhVU2bgG2si6Y1up1JTXHj7qhC9kKUXPXb1K1Xnj6 # eptestusersc
 
     # Create user accounts
     echo -e "${CYAN}-----------------------USER ACCOUNTS-----------------------${NC}"
     cleos system newaccount eosio everipediaiq EOS6XeRbyHP1wkfEvFeHJNccr4NA9QhnAr6cU21Kaar32Y5aHM5FP --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 5000 --transfer
+
 ###############################################RICH ADDED###############################################
     cleos system newaccount eosio $CONTRACT $OWNER_KEY --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 5000 --transfer
     cleos system newaccount eosio rick $OWNER_KEY --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 5000 --transfer
     cleos system newaccount eosio dick $OWNER_KEY --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 5000 --transfer
 #///////////////////////////////////////////////RICH ADDED///////////////////////////////////////////////
+
     cleos system newaccount eosio eptestusersa EOS6HfoynFKZ1Msq1bKNwtSTTpEu8NssYMcgsy6nHqhRp3mz7tNkB --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 5000 --transfer
     cleos system newaccount eosio eptestusersb EOS68s2PrHPDeGWTKczrNZCn4MDMgoW6SFHuTQhXYUNLT1hAmJei8 --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 5000 --transfer
     cleos system newaccount eosio eptestusersc EOS7LpZDPKwWWXgJnNYnX6LCBgNqCEqugW9oUQr7XqcSfz7aSFk8o --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 5000 --transfer
-    cleos system newaccount eosio eptestusersd EOS6KnJPV1mDuS8pYuLucaWzkwbWjGPeJsfQDpqc7NZ4F7zTQh4Wt --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 5000 --transfer
-    cleos system newaccount eosio eptestuserse EOS76Pcyw1Hd7hW8hkZdUE1DQ3UiRtjmAKQ3muKwidRqmaM8iNtDy --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 5000 --transfer
-    cleos system newaccount eosio eptestusersf EOS7jnmGEK9i33y3N1aV29AYrFptyJ43L7pATBEuVq4fVXG1hzs3G --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 5000 --transfer
-    cleos system newaccount eosio eptestusersg EOS7vr4QpGP7ixUSeumeEahHQ99YDE5jiBucf1B2zhuidHzeni1dD --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 5000 --transfer
 
     # Deploy eosio.wrap
     echo -e "${CYAN}-----------------------EOSIO WRAP-----------------------${NC}"
-    cleos wallet import --private-key 5J3JRDhf4JNhzzjEZAsQEgtVuqvsPPdZv4Tm6SjMRx1ZqToaray
+    cleos wallet import -n $WALLET --private-key 5J3JRDhf4JNhzzjEZAsQEgtVuqvsPPdZv4Tm6SjMRx1ZqToaray
     cleos system newaccount eosio eosio.wrap EOS7LpGN1Qz5AbCJmsHzhG7sWEGd9mwhTXWmrYXqxhTknY2fvHQ1A --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 5000 --transfer
     cleos push action eosio setpriv '["eosio.wrap", 1]' -p eosio@active
     cleos set contract eosio.wrap $EOSIO_CONTRACTS_ROOT/eosio.wrap/
@@ -228,28 +126,24 @@ if [ $BOOTSTRAP -eq 1 ]; then
     echo -e "${CYAN}-----------------------TRANSFERRING IQ-----------------------${NC}"
     
 ###############################################RICH ADDED###############################################
+    
     cleos transfer eosio rick "1000 EOS"
     cleos transfer eosio dick "1000 EOS"
 
     ## Deploy contracts
     echo -e "${CYAN}-----------------------DEPLOYING EVERIPEDIA CONTRACTS-----------------------${NC}"
-    cleos set contract everipediaiq . everipediaiq everipediaiq.wasm everipediaiq.abi
+    cleos set contract everipediaiq . everipediaiq.wasm everipediaiq.abi
     cleos set contract $CONTRACT . $CONTRACT_WASM $CONTRACT_ABI
 
     cleos set account permission $CONTRACT active ./perm.json -p $CONTRACT@active
-    cleos set account permission everipediaiq active '{ "threshold": 1, "keys": [{ "key": "EOS6XeRbyHP1wkfEvFeHJNccr4NA9QhnAr6cU21Kaar32Y5aHM5FP", "weight": 1 }], "accounts": [{ "permission": { "actor":"eparticlectr","permission":"eosio.code" }, "weight":1 }, { "permission": { "actor":"everipediaiq","permission":"eosio.code" }, "weight":1 }] }' owner -p everipediaiq
+    cleos set account permission everipediaiq active '{ "threshold": 1, "keys": [{ "key": "EOS6XeRbyHP1wkfEvFeHJNccr4NA9QhnAr6cU21Kaar32Y5aHM5FP", "weight": 1 }], "accounts": [{ "permission": { "actor":"everipediaiq","permission":"eosio.code" }, "weight":1 }] }' owner -p everipediaiq
+
 #///////////////////////////////////////////////RICH ADDED///////////////////////////////////////////////        
 
     # Create and issue token
     echo -e "${CYAN}-----------------------CREATING IQ TOKEN-----------------------${NC}"
-    cleos push action everipediaiq create "[\"everipediaiq\", \"100000000000.000 IQ\"]" -p everipediaiq@active
-    cleos push action everipediaiq issue "[\"everipediaiq\", \"10000000000.000 IQ\", \"initial supply\"]" -p everipediaiq@active
-    
-fi
-
-## Deploy contracts
-# echo -e "${CYAN}-----------------------DEPLOYING EVERIPEDIA CONTRACTS AGAIN-----------------------${NC}"
-# cleos set contract everipediaiq . everipediaiq everipediaiq.wasm everipediaiq.abi
+    cleos push action everipediaiq create '["everipediaiq", "100000000000.000 IQ"]' -p everipediaiq@active
+    cleos push action everipediaiq issue '["everipediaiq", "10000000000.000 IQ", "initial supply"]' -p everipediaiq@active
 
 
 # Test IQ transfers
