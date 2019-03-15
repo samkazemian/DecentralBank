@@ -694,25 +694,28 @@ ACTION daiqcontract::upfeed( name feeder, asset price,
    }
 }
 
-ACTION daiqcontract::deposit( name    from,
-                              name    to,
-                              asset   quantity,
-                              string  memo 
-                            ) { require_auth( from );
+ACTION daiqcontract::deposit( name from,
+                              name to,
+                              asset quantity,
+                              string memo ) { 
+   require_auth( from );
    eosio_assert( quantity.is_valid(), "invalid quantity" );
    eosio_assert( quantity.amount > 0, "must transfer positive quantity" );
    eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
    eosio_assert( from != _self && to == _self, 
                  "can only deposit to self" 
                );
-   add_balance( to, quantity );
+   eosio_assert ( get_code() == IQ_CONTRACT ||
+                  get_code() == name("eosio.token"), 
+                  "deposit must come from a real token contract" );
+   add_balance( from, quantity );
 }
 
-ACTION daiqcontract::withdraw( name    from,
-                               name    to,
-                               asset   quantity,
-                               string  memo 
-                             ) { require_auth( from );
+ACTION daiqcontract::withdraw( name from,
+                               name to,
+                               asset quantity,
+                               string memo ) {
+   require_auth( from );
    eosio_assert( quantity.is_valid(), "invalid quantity" );
    eosio_assert( quantity.amount > 0, "must transfer positive quantity" );
    eosio_assert( memo.size() <= 256, "memo has more than 256 bytes" );
@@ -756,7 +759,7 @@ void daiqcontract::add_balance( name owner, asset value )
    auto to = to_acnts.find( owner.value );
    
    if( to == to_acnts.end() ) 
-      to_acnts.emplace( owner, [&]( auto& a )
+      to_acnts.emplace( _self, [&]( auto& a )
       { a.owner = owner; a.balance = value; });
    else 
       to_acnts.modify( to, same_payer, [&]( auto& a ) 
@@ -765,11 +768,7 @@ void daiqcontract::add_balance( name owner, asset value )
 
 //checking all transfers, and not only from EOS system token
 extern "C" void apply( uint64_t receiver, uint64_t code, uint64_t action ) 
-{  if ( action == "transfer"_n.value && 
-        ( receiver == "eosio.token"_n.value || 
-          receiver == "everipediaiq"_n.value
-        )
-      )
+{  if ( action == "transfer"_n.value && code != receiver )
       eosio::execute_action( eosio::name(receiver), eosio::name(code), &daiqcontract::deposit );
    if ( code == receiver )
       switch ( action ) {

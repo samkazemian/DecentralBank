@@ -9,13 +9,24 @@
 
 #=================================================================================#
 # Config Constants
+NODEOS_HOST="127.0.0.1"
+NODEOS_PROTOCOL="http"
+NODEOS_PORT="8888"
+NODEOS_LOCATION="${NODEOS_PROTOCOL}://${NODEOS_HOST}:${NODEOS_PORT}"
+
+alias cleos="cleos --url=${NODEOS_LOCATION}"
 
 # Helper scripts
 COMPILE="./compile.sh"
-DEPLOY="./deploy.sh"
 
 # Contract accounts
 CONTRACT="daiqcontract"
+CONTRACT_WASM="$CONTRACT.wasm"
+CONTRACT_ABI="$CONTRACT.abi"
+
+TOKEN_CONTRACT="everipediaiq"
+TOKEN_WASM="$TOKEN_CONTRACT.wasm"
+TOKEN_ABI="$TOKEN_CONTRACT.abi"
 
 # Wallet name prereq... 
 # set WALLET environment variable via: 
@@ -66,6 +77,7 @@ cleos wallet unlock -n $WALLET --password $PASSWORD
 # 1) Create contract accounts
 echo "=== CREATING CONTRACT ACCOUNTS ==="
 cleos create account eosio $CONTRACT $OWNER_KEY $ACTIVE_KEY
+cleos create account eosio $TOKEN_CONTRACT $OWNER_KEY $ACTIVE_KEY
 
 # 2) Create test accounts
 echo "=== CREATING USER ACCOUNTS ==="
@@ -75,8 +87,14 @@ cleos create account eosio dick $OWNER_KEY $ACTIVE_KEY
 # 3) Compile and Deploy contracts
 echo "=== COMPILING CONTRACTS ==="
 "$COMPILE" $CONTRACT
+"$COMPILE" $TOKEN_CONTRACT
+
 echo "=== DEPLOYING CONTRACTS ==="
-"$DEPLOY" $CONTRACT
+cleos set contract $CONTRACT . $CONTRACT_WASM $CONTRACT_ABI
+cleos set contract $TOKEN_CONTRACT . $TOKEN_WASM $TOKEN_ABI
+
+# cleos --url https://jungle.eosio.cr:443 system newaccount --stake-net "10.0000 EOS" --stake-cpu "10.0000 EOS" --buy-ram-kbytes 12 $CREATOR_ACCOUNT $NEW_ACCOUNT $OWNER_KEY $ACTIVE_KEY
+# cleos --url https://jungle.eosio.cr:443 system buyram $CREATOR_ACCOUNT $NEW_ACCOUNT "50 EOS"
 
 # 4) Set up permissions for contracts to send deferred actions
 echo "===SETTING PERMISSIONS==="
@@ -84,7 +102,7 @@ cleos set account permission $CONTRACT active ./perm.json -p $CONTRACT@active
 
 #=================================================================================#
 # OPEN
-echo "=== Opening CDP/Balances  ==="
+echo "=== DEPOSITING IQ ==="
 
 # on first run, when given cdp type doesn't exist yet, 
 # "test" will simply pre-fund accounts with tokens
@@ -92,6 +110,10 @@ echo "=== Opening CDP/Balances  ==="
 # !!!!!!!!! UNCOMMENT FOR LOCAL TESTING !!!!!!!!!!
 #cleos push action $CONTRACT test '["rick"]' -p rick
 #cleos push action $CONTRACT test '["dick"]' -p dick
+
+cleos push action $TOKEN_CONTRACT create '["everipediaiq", "100000000000.000 IQ"]' -p $TOKEN_CONTRACT
+cleos push action $TOKEN_CONTRACT issue '["rick", "10000000.000 IQ", "init balance"]' -p $TOKEN_CONTRACT
+cleos push action $TOKEN_CONTRACT transfer '["rick", "daiqcontract", "1000.000 IQ", "deposit"]' -p rick
 
 # verify that balances have entry for tracking rick's tokens
 cleos get table $CONTRACT "IQ" accounts # verify first run

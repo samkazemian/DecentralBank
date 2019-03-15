@@ -20,6 +20,7 @@ CONTRACT daiqcontract : public contract
 {  using contract::contract;
    
    public:
+      const name IQ_CONTRACT = name("everipediaiq");
       const eosio::symbol IQSYMBOL = symbol( "IQ", 3 );
       static constexpr uint32_t FEED_FRESH = 300; // seconds in 5 minute period
       static constexpr uint32_t VOTE_PERIOD = 10; //604800; // seconds in a week
@@ -98,16 +99,16 @@ CONTRACT daiqcontract : public contract
 
       // Close balance of given symbol for account
       ACTION close( name owner, symbol_code symbl );
-
-      ACTION deposit( name    from,
-                      name    to,
-                      asset   quantity,
-                      string  memo );
       
-      ACTION withdraw( name    from,
-                       name    to,
-                       asset   quantity,
-                       string  memo );
+      ACTION deposit( name from,
+                      name to,
+                      asset quantity,
+                      string memo );
+
+      ACTION withdraw( name from,
+                       name to,
+                       asset quantity,
+                       string memo );
 
       // unchanged from eosio.token
       static asset get_balance( name token_contract_account, name owner, symbol_code sym_code )

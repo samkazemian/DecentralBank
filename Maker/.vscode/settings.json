@@ -12,6 +12,7 @@
         "ostream": "cpp",
         "type_traits": "cpp",
         "*.tcc": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "typeinfo": "cpp"
     }
 }
