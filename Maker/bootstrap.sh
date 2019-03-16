@@ -89,9 +89,7 @@ fi
     echo -e "      SYSTEM SET"
     cleos push action eosio setpriv '["eosio.msig", 1]' -p eosio@active
     cleos push action eosio init '[0, "4,EOS"]' -p eosio@active
-    cleos push action eosio init '[0, "4,SYS"]' -p eosio@active
-
-    cleos create account eosio $CONTRACT $OWNER_KEY $ACTIVE_KEY
+    cleos push action eosio init '[0, "4,SYS"]' -p eosio@active #TODO cannot call twice
 
     # Import user keys
     echo -e "${CYAN}-----------------------USER KEYS-----------------------${NC}"
@@ -103,10 +101,10 @@ fi
 
     # Create user accounts
     echo -e "${CYAN}-----------------------USER ACCOUNTS-----------------------${NC}"
-    cleos system newaccount eosio everipediaiq EOS6XeRbyHP1wkfEvFeHJNccr4NA9QhnAr6cU21Kaar32Y5aHM5FP --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 5000 --transfer
+    cleos system newaccount eosio everipediaiq EOS6XeRbyHP1wkfEvFeHJNccr4NA9QhnAr6cU21Kaar32Y5aHM5FP --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 50000 --transfer
 
 ###############################################RICH ADDED###############################################
-    cleos system newaccount eosio $CONTRACT $OWNER_KEY --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 5000 --transfer
+    cleos system newaccount eosio $CONTRACT $OWNER_KEY --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 50000 --transfer
     cleos system newaccount eosio rick $OWNER_KEY --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 5000 --transfer
     cleos system newaccount eosio dick $OWNER_KEY --stake-cpu "50 EOS" --stake-net "10 EOS" --buy-ram-kbytes 5000 --transfer
 #///////////////////////////////////////////////RICH ADDED///////////////////////////////////////////////
@@ -122,14 +120,8 @@ fi
     cleos push action eosio setpriv '["eosio.wrap", 1]' -p eosio@active
     cleos set contract eosio.wrap $EOSIO_CONTRACTS_ROOT/eosio.wrap/
 
-    # Transfer EOS to testing accounts
-    echo -e "${CYAN}-----------------------TRANSFERRING IQ-----------------------${NC}"
-    
 ###############################################RICH ADDED###############################################
     
-    cleos transfer eosio rick "1000 EOS"
-    cleos transfer eosio dick "1000 EOS"
-
     ## Deploy contracts
     echo -e "${CYAN}-----------------------DEPLOYING EVERIPEDIA CONTRACTS-----------------------${NC}"
     cleos set contract everipediaiq . everipediaiq.wasm everipediaiq.abi
@@ -137,9 +129,13 @@ fi
 
     cleos set account permission $CONTRACT active ./perm.json -p $CONTRACT@active
     cleos set account permission everipediaiq active '{ "threshold": 1, "keys": [{ "key": "EOS6XeRbyHP1wkfEvFeHJNccr4NA9QhnAr6cU21Kaar32Y5aHM5FP", "weight": 1 }], "accounts": [{ "permission": { "actor":"everipediaiq","permission":"eosio.code" }, "weight":1 }] }' owner -p everipediaiq
+    
+    # Transfer EOS to testing accounts
+    echo -e "${CYAN}-----------------------TRANSFERRING EOS-----------------------${NC}"
 
-#///////////////////////////////////////////////RICH ADDED///////////////////////////////////////////////        
-
+    cleos push action eosio.token transfer '["eosio", "rick", "1000.0000 EOS", "memo"]' -p eosio
+    cleos push action eosio.token transfer '["eosio", "dick", "1000.0000 EOS", "memo"]' -p eosio
+ 
     # Create and issue token
     echo -e "${CYAN}-----------------------CREATING IQ TOKEN-----------------------${NC}"
     cleos push action everipediaiq create '["everipediaiq", "100000000000.000 IQ"]' -p everipediaiq@active
@@ -156,8 +152,8 @@ cleos push action everipediaiq transfer '["everipediaiq", "dick", "10000.000 IQ"
 cleos push action everipediaiq transfer '["rick", "daiqcontract", "10000.000 IQ", "test"]' -p rick
 cleos push action everipediaiq transfer '["dick", "daiqcontract", "10000.000 IQ", "test"]' -p dick
 
-cleos push action eosio.token transfer '["rick", "daiqcontract", "10000.0000 EOS", "test"]' -p rick
-cleos push action eosio.token transfer '["dick", "daiqcontract", "10000.0000 EOS", "test"]' -p dick
+cleos push action eosio.token transfer '["rick", "daiqcontract", "100.0000 EOS", "test"]' -p rick
+cleos push action eosio.token transfer '["dick", "daiqcontract", "100.0000 EOS", "test"]' -p dick
 
 # verify that balances have entry for tracking rick's tokens
 cleos get table $CONTRACT "IQ" accounts # verify first run
@@ -243,6 +239,7 @@ cleos get table $CONTRACT $CONTRACT feed
 
 # OPEN
 cleos push action $CONTRACT open '["rick", "FUD", "rick"]' -p rick
+cleos push action $CONTRACT open '["dick", "FUD", "dick"]' -p dick
 
 # verify that dick's cdp was transfered back to rick
 cleos get table $CONTRACT "FUD" cdp
@@ -252,6 +249,7 @@ cleos get table $CONTRACT "FUD" cdp
 echo "=== Push collateral ==="
 
 cleos push action $CONTRACT lock '["rick", "FUD", "6.0000 EOS"]' -p rick
+cleos push action $CONTRACT lock '["dick", "FUD", "16.0000 EOS"]' -p dick
 
 # verify that rick's clatrl balance was updated
 cleos get table $CONTRACT "EOS" accounts
@@ -263,6 +261,7 @@ cleos get table $CONTRACT "FUD" cdp
 echo "=== Pull Dai ==="
 
 cleos push action $CONTRACT draw '["rick", "FUD", "4.00 USD"]' -p rick
+cleos push action $CONTRACT draw '["dick", "FUD", "8.00 USD"]' -p dick
 
 # verify that stabl amount was pulled
 cleos get table $CONTRACT "FUD" cdp

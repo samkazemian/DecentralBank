@@ -114,6 +114,13 @@ echo "=== DEPOSITING IQ ==="
 cleos push action $TOKEN_CONTRACT create '["everipediaiq", "100000000000.000 IQ"]' -p $TOKEN_CONTRACT
 cleos push action $TOKEN_CONTRACT issue '["rick", "10000000.000 IQ", "init balance"]' -p $TOKEN_CONTRACT
 cleos push action $TOKEN_CONTRACT transfer '["rick", "daiqcontract", "1000.000 IQ", "deposit"]' -p rick
+cleos push action $TOKEN_CONTRACT transfer '["dick", "daiqcontract", "1000.000 IQ", "deposit"]' -p dick
+
+
+cleos push action eosio.token create '["eosio", "100000000000.0000 EOS"]' -p eosio
+cleos push action eosio.token issue '["rick", "10000000.0000 EOS", "init balance"]' -p eosio
+cleos push action eosio.token transfer '["rick", "daiqcontract", "1000.0000 EOS", "deposit"]' -p rick
+cleos push action eosio.token transfer '["dick", "daiqcontract", "1000.0000 EOS", "deposit"]' -p dick
 
 # verify that balances have entry for tracking rick's tokens
 cleos get table $CONTRACT "IQ" accounts # verify first run
@@ -199,6 +206,7 @@ cleos get table $CONTRACT $CONTRACT feed
 
 # OPEN
 cleos push action $CONTRACT open '["rick", "FUD", "rick"]' -p rick
+cleos push action $CONTRACT open '["dick", "FUD", "dick"]' -p dick
 
 # verify that dick's cdp was transfered back to rick
 cleos get table $CONTRACT "FUD" cdp
@@ -208,6 +216,7 @@ cleos get table $CONTRACT "FUD" cdp
 echo "=== Push collateral ==="
 
 cleos push action $CONTRACT lock '["rick", "FUD", "6.0000 EOS"]' -p rick
+cleos push action $CONTRACT lock '["dick", "FUD", "6.0000 EOS"]' -p dick
 
 # verify that rick's clatrl balance was updated
 cleos get table $CONTRACT "EOS" accounts
@@ -219,6 +228,7 @@ cleos get table $CONTRACT "FUD" cdp
 echo "=== Pull Dai ==="
 
 cleos push action $CONTRACT draw '["rick", "FUD", "4.00 USD"]' -p rick
+cleos push action $CONTRACT draw '["dick", "FUD", "4.00 USD"]' -p dick
 
 # verify that stabl amount was pulled
 cleos get table $CONTRACT "FUD" cdp
