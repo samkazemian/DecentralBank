@@ -216,7 +216,7 @@ cleos get table $CONTRACT "FUD" cdp
 echo "=== Push collateral ==="
 
 cleos push action $CONTRACT lock '["rick", "FUD", "6.0000 EOS"]' -p rick
-cleos push action $CONTRACT lock '["dick", "FUD", "6.0000 EOS"]' -p dick
+cleos push action $CONTRACT lock '["dick", "FUD", "16.0000 EOS"]' -p dick
 
 # verify that rick's clatrl balance was updated
 cleos get table $CONTRACT "EOS" accounts
@@ -228,7 +228,7 @@ cleos get table $CONTRACT "FUD" cdp
 echo "=== Pull Dai ==="
 
 cleos push action $CONTRACT draw '["rick", "FUD", "4.00 USD"]' -p rick
-cleos push action $CONTRACT draw '["dick", "FUD", "4.00 USD"]' -p dick
+cleos push action $CONTRACT draw '["dick", "FUD", "8.00 USD"]' -p dick
 
 # verify that stabl amount was pulled
 cleos get table $CONTRACT "FUD" cdp
