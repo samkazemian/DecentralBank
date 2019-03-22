@@ -551,9 +551,9 @@ cleos push action $CONTRACT liquify '["sick", "rick", "FUD", "0.20 USD"]' -p sic
 cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "0.40 USD"]' -p sick
 
 echo "=== Second round auction done, waiting for round to expire... ==="
+sleep 5
 cleos get table $CONTRACT "FUD" cdp
 cleos get table $CONTRACT "FUD" bid
-sleep 5
 
 cleos push action $CONTRACT liquify '["sick", "rick", "FUD", "0.05 USD"]' -p sick
 
