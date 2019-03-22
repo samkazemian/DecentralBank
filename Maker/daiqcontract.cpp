@@ -315,10 +315,10 @@ ACTION daiqcontract::settle( name feeder, symbol_code symbl )
    const auto& fc = feedstable.get( st.total_collateral.quantity.symbol.code().raw(), 
                                     "no price data" 
                                   );
-   uint64_t liq = fc.price.amount * 100 / st.total_stablecoin.amount *
-                  st.total_collateral.quantity.amount / 10000;
+   uint64_t liq = ( fc.price.amount * 100 * st.total_collateral.quantity.amount ) /
+                  ( st.total_stablecoin.amount * 10000 );
                    
-   eosio_assert( st.liquid8_ratio > liq, 
+   eosio_assert( st.liquid8_ratio >= liq, 
                  "no liquidation hazard for settlement"
                );                                  
    stable.modify( st, same_payer, [&]( auto& t ) 
@@ -416,17 +416,17 @@ ACTION daiqcontract::liquify( name bidder, name owner,
                st.tau > ( now() - bt -> started ) ) {
       eosio_assert( bidamt.symbol == it.stablecoin.symbol, 
                     "bid is of wrong symbol" 
-                  );
-      eosio_assert( bidamt.amount >= ( st.beg / 100 ) * bt -> bidamt.amount,  
-                    "bid too small"
                   ); name contract = _self;
+      uint64_t min = bt -> bidamt.amount + ( bt -> bidamt.amount * st.beg / 100 );
+      eosio_assert( bidamt.amount >= min, "bid too small" ); 
+
       if ( it.stablecoin.symbol == IQ_SYMBOL )     
          contract = IQ_NAME;      
       sub_balance( bidder, bidamt );
       add_balance( bt -> bidder, bt -> bidamt, contract ); 
       //subtract difference between bids cdp balance
       cdpstable.modify( it, bidder, [&]( auto& p ) 
-      {  p.stablecoin -= ( bidamt - bt -> bidamt ); }); 
+      {  p.stablecoin.amount -= ( bidamt - bt -> bidamt ); }); 
       bidstable.modify( bt, bidder, [&]( auto& b ) { 
          b.bidder = bidder;
          b.bidamt = bidamt;

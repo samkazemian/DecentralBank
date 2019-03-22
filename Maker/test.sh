@@ -188,7 +188,6 @@ cleos push action eosio.token transfer '["dick", "daiqcontract", "100.0000 EOS",
 cleos push action eosio.token transfer '["nick", "daiqcontract", "100.0000 EOS", "test"]' -p nick
 cleos push action eosio.token transfer '["sick", "daiqcontract", "100.0000 EOS", "test"]' -p sick
 
-
 # verify that balances have entry for tracking tokens
 cleos get table $CONTRACT "IQ" accounts 
 cleos get table $CONTRACT "EOS" accounts
@@ -463,13 +462,17 @@ echo -e "${CYAN}------------------TOGGLE SETTLE OFF FIRST-----------------------
 cleos push action $CONTRACT propose '["dick", "YOU", "4,EOS", "USD", 0, 0, 0, 0, 0, 0, 0, 0, "dick", "eosio.token"]' -p dick
 cleos push action $CONTRACT vote '["rick", "YOU", false, "0.001 IQ" ]' -p rick
 
+cleos get table $CONTRACT $CONTRACT feeds
+cleos get table $CONTRACT $CONTRACT stat
 sleep 10
 
 echo -e "${CYAN}-----------------------SUPPOSED TO FAIL - Automatic Global settlement-----------------------${NC}"
-# liquidation ratio has not been exceeded
-cleos push action $CONTRACT settle '["dick", "FUD"]' -p dick
 # brand new cdp type, no debt issued yet
 cleos push action $CONTRACT settle '["dick", "YOU"]' -p dick
+sleep 1
+
+# liquidation ratio has not been exceeded
+cleos push action $CONTRACT settle '["dick", "FUD"]' -p dick
 # TRIVIAL
 # cdp type already in global settlement
 # no price feed for cdp type's collateral
@@ -492,7 +495,6 @@ sleep 2
 cleos push action $CONTRACT upfeed '["dick", "0.02 USD", "FUD", "4,EOS"]' -f -p dick
 sleep 2
 cleos push action $CONTRACT upfeed '["dick", "0.01 USD", "FUD", "4,EOS"]' -f -p dick
-
 
 # AUTOMATIC SETTLE
 echo -e "${CYAN}-----------------------Automatic Global settlement-----------------------${NC}"
@@ -519,10 +521,10 @@ cleos push action $CONTRACT liquify '["sick", "rick", "FUD", "2.25 USD"]' -p sic
 cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "2.25 USD"]' -p sick
 
 echo -e "${CYAN}-----------------------SUPPOSED TO FAIL-----------------------${NC}"
+# bid quantity amount is not at least beg% greater/eq than last bid
+cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "2.27 USD"]' -p sick
 # bid quantity symbol is not the same as cdp's debt symbol
 cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "2.400 IQ"]' -p sick
-# bid quantity amount is not at least beg% greater/eq than last bid
-cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "2.30 USD"]' -p sick
 # TRIVIAL
 # price feed data doesn't exist or is too stale
 # invalid cdp type symbol; cdp type or cdp doesn't exist
@@ -531,10 +533,10 @@ cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "2.30 USD"]' -p sic
 
 # for one round, remainder 0
 cleos push action $CONTRACT liquify '["sick", "nick", "FUD", "3.00 USD"]' -p sick
-# for two rounds, remainder 0.50
+# for two rounds, remainder 0.25
 cleos push action $CONTRACT liquify '["sick", "rick", "FUD", "2.75 USD"]' -p sick
-# for three rounds, remainder 0.85
-cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "2.40 USD"]' -p sick
+# for three rounds, remainder 0.75
+cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "2.70 USD"]' -p sick
 
 # wait for round to expire and switch to selling off IQ for the remaining balance
 echo "=== First round auction done, waiting for round to expire... ==="
@@ -545,8 +547,8 @@ sleep 5
 ##### ROUND 2 #####
 
 # for two rounds, remainder 0
-cleos push action $CONTRACT liquify '["sick", "rick", "FUD", "0.50 USD"]' -p sick
-# for three rounds, remainder 0.35
+cleos push action $CONTRACT liquify '["sick", "rick", "FUD", "0.25 USD"]' -p sick
+# for three rounds, remainder 0.05
 cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "0.50 USD"]' -p sick
 
 echo "=== Second round auction done, waiting for round to expire... ==="
@@ -557,7 +559,7 @@ sleep 5
 ##### ROUND 3 #####
 # auction covered more than the cdp debt, proceed to take bids in IQ for the diff
 
-cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "0.350 IQ"]' -p sick
+cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "0.025 IQ"]' -p sick
 sleep 5
 
 echo "=== Third round auction done, balance closed ==="
