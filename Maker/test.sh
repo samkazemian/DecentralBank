@@ -545,20 +545,22 @@ sleep 5
 
 ##### ROUND 2 #####
 
-# for two rounds, remainder 0
-cleos push action $CONTRACT liquify '["sick", "rick", "FUD", "0.25 USD"]' -p sick
-# for three rounds, remainder 0.05
-cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "0.25 USD"]' -p sick
+# for two rounds, remainder 5
+cleos push action $CONTRACT liquify '["sick", "rick", "FUD", "0.20 USD"]' -p sick
+# for three rounds, overpaid by 0.05
+cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "0.40 USD"]' -p sick
 
 echo "=== Second round auction done, waiting for round to expire... ==="
 cleos get table $CONTRACT "FUD" cdp
 cleos get table $CONTRACT "FUD" bid
 sleep 5
 
+cleos push action $CONTRACT liquify '["sick", "rick", "FUD", "0.05 USD"]' -p sick
+
 ##### ROUND 3 #####
 # auction covered more than the cdp debt, proceed to take bids in IQ for the diff
 
-cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "0.050 IQ"]' -p sick
+cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "0.100 IQ"]' -p sick
 sleep 5
 
 echo "=== Third round auction done, balance closed ==="
