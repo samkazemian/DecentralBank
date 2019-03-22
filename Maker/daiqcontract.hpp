@@ -1,3 +1,4 @@
+
 /*
  * @ author
  *   richard tiutiun 
@@ -18,15 +19,13 @@ using std::string;
 
 CONTRACT daiqcontract : public contract 
 {  using contract::contract;
-   
    public:
-      const name IQ_CONTRACT = name("everipediaiq");
-      const eosio::symbol IQSYMBOL = symbol( "IQ", 3 );
-      static constexpr uint32_t FEED_FRESH = 300; // seconds in 5 minute period
-      static constexpr uint32_t VOTE_PERIOD = 10; //604800; // seconds in a week
-      static constexpr uint32_t SECYR = 31557600; // seconds in a year on average
-      
-      //ACTION test ( name owner );
+      static constexpr uint32_t SECYR = 10; //31557600; //TODO: secs per avf year
+      static constexpr uint32_t FEED_FRESH = 300; // seconds in a 5 minute period
+      static constexpr uint32_t VOTE_PERIOD = 5; //604800; //TODO: secs per week
+      const symbol IQ_SYMBOL = symbol( "IQ", 3 );
+      const name IQ_NAME = name( "everipediaiq" );
+
       /* The owner of an urn can transfer
        * its ownership at any time using give.  
        */ //ACTION give( name giver, name taker, symbol_code symbl );
@@ -35,18 +34,18 @@ CONTRACT daiqcontract : public contract
        * The system uses the market price of collateral 
        * at the time of settlement to compute how much
        * collateral each user gets. 
-       */ ACTION settle( symbol_code symbl );
+       */ ACTION settle( name feeder, symbol_code symbl );
 
       /* Publish a proposal that either motions for the 
        * enactment of a new cdp type, or modification
        * of an existing one.
        */ ACTION propose( name proposer, symbol_code symbl, 
-                          symbol_code clatrl, symbol_code stabl,
+                          symbol clatrl, symbol_code stabl,
                           uint64_t max, uint64_t gmax, 
                           uint64_t pen, uint64_t fee,
                           uint64_t beg, uint64_t liq, 
                           uint32_t tau, uint32_t ttl,
-                          name feeder );
+                          name feeder, name contract );
 
       /* Take a position (for/against) on a cdp proposal
        */ ACTION vote( name voter, symbol_code symbl, 
@@ -81,8 +80,7 @@ CONTRACT daiqcontract : public contract
 
       /* Owner can send back dai and reduce 
        * the cdp's issued stablecoin balance.
-       */ ACTION wipe( name owner, symbol_code symbl, 
-                       asset quantity, asset fee );            
+       */ ACTION wipe( name owner, symbol_code symbl, asset quantity );            
 
       /* Owner can close this CDP, if the price feed
        * is up to date and the CDP is not in liquidation. 
@@ -92,48 +90,42 @@ CONTRACT daiqcontract : public contract
 
       /* Price feed data update action
        */ ACTION upfeed( name feeder, asset price, 
-                         symbol_code cdp_type, symbol_code symbl );
+                         symbol_code cdp_type, symbol symbl );
 
       // Open cdp or initiate balances for account
       ACTION open( name owner, symbol_code symbl, name ram_payer );
 
+      ACTION withdraw( name owner, asset quantity, string memo );
+
       // Close balance of given symbol for account
       ACTION close( name owner, symbol_code symbl );
       
-      ACTION deposit( name from,
-                      name to,
-                      asset quantity,
-                      string memo );
+      ACTION deposit( name from, name to,
+                      asset quantity, string memo );
 
-      ACTION withdraw( name from,
-                       name to,
-                       asset quantity,
-                       string memo );
+      ACTION transfer( name from, name to,
+                       asset quantity, string memo );
 
-      // unchanged from eosio.token
-      static asset get_balance( name token_contract_account, name owner, symbol_code sym_code )
-      {  accounts accountstable( token_contract_account, owner.value );
-         const auto& ac = accountstable.get( sym_code.raw() );
+      static asset get_balance( name contract, symbol_code sym_code, name owner )
+      {  accounts accountstable( contract, sym_code.raw() );
+         const auto& ac = accountstable.get( owner.value );
          return ac.balance;
       }
-      
+
    private:
-      TABLE bid 
-      {  //SCOPE: cdp type symbol
-         name     owner; //cdp owner
+      TABLE bid //SCOPE: cdp type symbol
+      {  name     owner;
          name     bidder;
          asset    bidamt;
          
          uint32_t started;
          uint32_t lastbid;
-         //symbol_code bid_type;
 
          uint64_t primary_key() const { return owner.value; }
-      }; typedef eosio::multi_index< "bid"_n, bid > bids;
+      }; typedef  eosio::multi_index< "bid"_n, bid > bids;
 
-      TABLE cdp 
-      {  //SCOPE: cdp type symbol
-         name     owner;
+      TABLE cdp //SCOPE: cdp type symbol
+      {  name     owner;
          uint32_t created;
          //Amount of collateral currently locked by this CDP
          asset    collateral;
@@ -142,70 +134,69 @@ CONTRACT daiqcontract : public contract
          //in liquidation or not
          bool     live = true;
 
-         //last draw amt and last draw stamp for stability fee
-
          uint64_t primary_key() const { return owner.value; }
-      }; typedef eosio::multi_index< "cdp"_n, cdp > cdps;
+      }; typedef  eosio::multi_index< "cdp"_n, cdp > cdps;
 
-      TABLE prop 
+      TABLE prop
       {  symbol_code cdp_type;
-         name        proposer;
          uint32_t    deadline;
+         name        proposer;
          asset       yay;
          asset       nay;
          
          uint64_t    primary_key() const { return cdp_type.raw(); }
       }; typedef     eosio::multi_index< "prop"_n, prop > props;
 
-      TABLE stat 
-      {  bool        live = false;
-         uint32_t    last_vote = 0; //for parameter updates
+      TABLE stat //SCOPE: either _self or proposer
+      {  bool           live = false;
+         uint32_t       last_vote = 0; 
          
          //auctions will terminate after tau seconds have passed from start
-         uint32_t    tau;
+         uint32_t       tau;
          //and after ttl seconds have passed since placement of last bid
-         uint32_t    ttl;
+         uint32_t       ttl;
          
-         name        feeder; //designated account for providing price feeds
+         //TODO: feeders could be vector of accounts
+         name           feeder; //designated account for providing price feeds
          //CDT Type Symbol e.g...
          //DBEOS / DBKARMA...24*23*22*21*20 = over 5M different variants
-         symbol_code cdp_type;   
+         symbol_code    cdp_type;   
          //max total stablecoin issuable by all CDPs of this type
-         uint64_t    global_ceil;
-         uint64_t    debt_ceiling;
+         uint64_t       global_ceil;
+         uint64_t       debt_ceiling;
 
-         uint64_t     stability_fee; //units are APR %
-         uint64_t     beg; //minimum bid increase in %
+         uint64_t       stability_fee; //units are APR %
+         uint64_t       beg; //minimum bid increase in %
          //by default, 13% of the collateral in the CDP 
-         uint64_t     penalty_ratio; //units are %
+         uint64_t       penalty_ratio; //units are %
          //collateral asset units needed per issued stable tokens
-         uint64_t     liquid8_ratio; //units are %
+         uint64_t       liquid8_ratio; //units are %
          
-         asset       fee_balance; //total stability fees paid
-         //Symbol and total amount locked as collateral for all CDPs of this type
-         asset       total_collateral; 
-         //Symbol and total amount of stablecoin in circulation for CDPs of this type
-         asset       total_stablecoin;
+         asset          fee_balance; //total stability fees paid
+         //total amount of stablecoin in circulation for CDPs of this type
+         asset          total_stablecoin;
+         //total amount locked as collateral for all CDPs of this type
+         extended_asset total_collateral; 
          
-         uint64_t    primary_key()const { return cdp_type.raw(); }
-      }; typedef     eosio::multi_index< "stat"_n, stat > stats;
+         uint64_t       primary_key()const { return cdp_type.raw(); }
+      }; typedef        eosio::multi_index< "stat"_n, stat > stats;
       
       TABLE feed
-      {  symbol_code symbl;
-         asset       price;
-         uint32_t    stamp = 0;
-         uint64_t    total = 0; //amount in circulation, ie not locked in cdp
+      {  asset    total; //amount in circulation, not locked in cdps
+         asset    price;
+         uint32_t stamp;
          
-         uint64_t    primary_key() const { return symbl.raw(); }
-      }; typedef     eosio::multi_index< "feed"_n, feed > feeds;
+         uint64_t primary_key() const { return total.symbol.code().raw(); }
+      }; typedef  eosio::multi_index< "feed"_n, feed > feeds;
 
-      TABLE account
-      {  asset    balance;
+      TABLE account //SCOPE: balance symbol
+      {  asset    balance; //can be proposed cdp type symbol voted on
          name     owner;
-            
+         name     code;
+         
          uint64_t primary_key() const { return owner.value; }
       }; typedef  eosio::multi_index< "accounts"_n, account > accounts;
 
-      void sub_balance( name owner, asset value );
-      void add_balance( name owner, asset value );
+      name sub_balance( name owner, asset value ); //returns balance contract
+      void add_balance( name owner, asset value, name code );
 };
