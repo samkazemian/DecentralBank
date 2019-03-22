@@ -466,7 +466,14 @@ ACTION daiqcontract::liquify( name bidder, name owner,
          else if ( it.stablecoin.amount < 0 )
             cdpstable.modify( it, same_payer, [&]( auto& p ) {  
                p.collateral = -it.stablecoin;
-               p.stablecoin = asset( -iqamt, IQ_SYMBOL );
+               if ( it.stablecoin.symbol == IQ_SYMBOL )
+                  p.stablecoin = asset( -it.stablecoin.amount *  fv.price.amount, 
+                                        IQ_SYMBOL 
+                                      );
+               else 
+                  p.stablecoin = asset( (-it.stablecoin.amount / fv.price.amount) * 1000, 
+                                        IQ_SYMBOL 
+                                      );
             });
          eosio_assert( bidamt.symbol == it.stablecoin.symbol, 
                        "bid is of wrong symbol" 
@@ -487,7 +494,7 @@ ACTION daiqcontract::liquify( name bidder, name owner,
          });
       }
    } 
-   if ( it.stablecoin.amount <= 0 ) {
+   if ( it.stablecoin.amount == 0 ) {
       if ( it.collateral.amount ) {
          name contract = _self;
          if ( it.collateral.symbol == IQ_SYMBOL )

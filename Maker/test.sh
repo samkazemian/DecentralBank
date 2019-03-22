@@ -243,14 +243,14 @@ cleos get table $CONTRACT "HEY" accounts
 cleos get table $CONTRACT "YOU" accounts
 cleos get table $CONTRACT $CONTRACT prop
 # wait for referended to get called automatically via deferred transaction
-sleep 10
+sleep 5
 
 # verify that YOU is still up for proposal
 cleos get table $CONTRACT $CONTRACT prop
 
 # for tie
 cleos push action $CONTRACT vote '["rick", "YOU", false, "0.001 IQ"]' -p rick
-sleep 10
+sleep 5
 
 # ----------------- SUPPOSED TO FAIL ----------------- #
 # TRIVIAL
@@ -280,7 +280,7 @@ echo -e "${CYAN}-----------------------Proposing TURN ON global settlement------
 cleos push action $CONTRACT propose '["dick", "YOU", "4,EOS", "USD", 0, 0, 0, 0, 0, 0, 0, 0, "dick", "eosio.token"]' -p dick
 cleos push action $CONTRACT vote '["rick", "YOU", false, "0.001 IQ" ]' -p rick
 
-sleep 10
+sleep 5
 
 # verify that stat entry for this cdp type's live bool was flipped
 cleos get table $CONTRACT $CONTRACT stat
@@ -321,7 +321,7 @@ echo -e "${CYAN}----------------------- Proposing TURN OFF global settlement----
 
 cleos push action $CONTRACT propose '["dick", "YOU", "4,EOS", "USD", 0, 0, 0, 0, 0, 0, 0, 0, "dick", "eosio.token"]' -p dick
 cleos push action $CONTRACT vote '["rick", "YOU", false, "0.001 IQ" ]' -p rick
-sleep 10
+sleep 5
 
 cleos push action $CONTRACT open '["rick", "YOU", "rick"]' -p rick
 
@@ -329,7 +329,7 @@ echo -e "${CYAN}-----------------------Proposing TURN ON global settlement------
 
 cleos push action $CONTRACT propose '["dick", "YOU", "4,EOS", "USD", 0, 0, 0, 0, 0, 0, 0, 0, "dick", "eosio.token"]' -p dick
 cleos push action $CONTRACT vote '["rick", "YOU", false, "0.001 IQ" ]' -p rick
-sleep 10
+sleep 5
 
 #=================================================================================#
 # LOCK
@@ -463,7 +463,7 @@ cleos push action $CONTRACT propose '["dick", "YOU", "4,EOS", "USD", 0, 0, 0, 0,
 cleos push action $CONTRACT vote '["rick", "YOU", false, "0.001 IQ" ]' -p rick
 
 cleos get table $CONTRACT $CONTRACT stat
-sleep 10
+sleep 5
 
 echo -e "${CYAN}-----------------------SUPPOSED TO FAIL - Automatic Global settlement-----------------------${NC}"
 # brand new cdp type, no debt issued yet

@@ -22,7 +22,7 @@ CONTRACT daiqcontract : public contract
    public:
       static constexpr uint32_t SECYR = 10; //31557600; //TODO: secs per avf year
       static constexpr uint32_t FEED_FRESH = 300; // seconds in a 5 minute period
-      static constexpr uint32_t VOTE_PERIOD = 10; //604800; //TODO: secs per week
+      static constexpr uint32_t VOTE_PERIOD = 5; //604800; //TODO: secs per week
       const symbol IQ_SYMBOL = symbol( "IQ", 3 );
       const name IQ_NAME = name( "everipediaiq" );
 
