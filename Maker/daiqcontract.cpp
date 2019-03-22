@@ -466,7 +466,7 @@ ACTION daiqcontract::liquify( name bidder, name owner,
                                         fv.price.symbol 
                                       ); 
                else
-                  p.collateral = asset( it.stablecoin.amount * 1000 / fv.price.amount,
+                  p.collateral = asset( it.stablecoin.amount  * 1000 / fv.price.amount,
                                         IQ_SYMBOL 
                                       );
             });   
@@ -474,10 +474,10 @@ ACTION daiqcontract::liquify( name bidder, name owner,
             cdpstable.modify( it, same_payer, [&]( auto& p ) {  
                p.collateral = -it.stablecoin;
                if ( it.stablecoin.symbol == IQ_SYMBOL )
-                  p.stablecoin = asset( -it.stablecoin.amount * fv.price.amount, 
+                  p.stablecoin = asset( -( it.stablecoin.amount * fv.price.amount ), 
                                         fv.price.symbol 
                                       );
-               else p.stablecoin = asset( -it.stablecoin.amount * 1000 / fv.price.amount, 
+               else p.stablecoin = asset( -( it.stablecoin.amount * 1000 / fv.price.amount ), 
                                           IQ_SYMBOL 
                                         );
             });

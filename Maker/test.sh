@@ -545,9 +545,9 @@ sleep 5
 
 ##### ROUND 2 #####
 
-# for two rounds, remainder 5
+# for two rounds, remainder 0.05
 cleos push action $CONTRACT liquify '["sick", "rick", "FUD", "0.20 USD"]' -p sick
-# for three rounds, overpaid by 0.05
+# for three rounds, overpaid by 0.10
 cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "0.40 USD"]' -p sick
 
 echo "=== Second round auction done, waiting for round to expire... ==="
