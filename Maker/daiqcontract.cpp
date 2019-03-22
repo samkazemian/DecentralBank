@@ -426,7 +426,7 @@ ACTION daiqcontract::liquify( name bidder, name owner,
       add_balance( bt -> bidder, bt -> bidamt, contract ); 
       //subtract difference between bids cdp balance
       cdpstable.modify( it, bidder, [&]( auto& p ) 
-      {  p.stablecoin.amount -= ( bidamt - bt -> bidamt ); }); 
+      {  p.stablecoin -= ( bidamt - bt -> bidamt ) }); 
       bidstable.modify( bt, bidder, [&]( auto& b ) { 
          b.bidder = bidder;
          b.bidamt = bidamt;
