@@ -144,7 +144,7 @@ echo -e "${CYAN}-----------------------TRANSFERRING EOS-----------------------${
 cleos push action eosio.token transfer '["eosio", "rick", "1000.0000 EOS", "memo"]' -p eosio
 cleos push action eosio.token transfer '["eosio", "dick", "1000.0000 EOS", "memo"]' -p eosio
 cleos push action eosio.token transfer '["eosio", "nick", "1000.0000 EOS", "memo"]' -p eosio
-cleos push action eosio.token transfer '["eosio", "sick", "10000000000.0000 EOS", "memo"]' -p eosio
+cleos push action eosio.token transfer '["eosio", "sick", "1000.0000 EOS", "memo"]' -p eosio
 
 # Create and issue token
 echo -e "${CYAN}-----------------------CREATING IQ TOKEN-----------------------${NC}"
@@ -186,7 +186,7 @@ cleos push action everipediaiq transfer '["sick", "daiqcontract", "10000.000 IQ"
 cleos push action eosio.token transfer '["rick", "daiqcontract", "100.0000 EOS", "test"]' -p rick
 cleos push action eosio.token transfer '["dick", "daiqcontract", "100.0000 EOS", "test"]' -p dick
 cleos push action eosio.token transfer '["nick", "daiqcontract", "100.0000 EOS", "test"]' -p nick
-cleos push action eosio.token transfer '["sick", "daiqcontract", "1500000000.0000 EOS", "test"]' -p sick
+cleos push action eosio.token transfer '["sick", "daiqcontract", "100.0000 EOS", "test"]' -p sick
 
 
 # verify that balances have entry for tracking tokens
