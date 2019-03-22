@@ -411,12 +411,12 @@ cleos push action $CONTRACT wipe '["rick", "FUD", "2.00 USD"]' -p rick
 cleos push action $CONTRACT wipe '["dick", "FUD", "2.00 USD"]' -p dick
 cleos push action $CONTRACT wipe '["nick", "FUD", "2.00 USD"]' -p nick
 
+cleos push action $CONTRACT withdraw '["nick", "0.000 IQ", "test"]' -p nick
+
 echo -e "${CYAN}-----------------------SUPPOSED TO FAIL-----------------------${NC}"
 # trying to wipe more debt than is outstanding in the cdp
 cleos push action $CONTRACT wipe '["nick", "FUD", "20.00 USD"]' -p nick
 # insufficient IQ balance available to pay fee, 0 will withdraw all
-cleos push action $CONTRACT withdraw '["nick", "0.000 IQ", "test"]' -p nick
-sleep 2
 cleos push action $CONTRACT wipe '["nick", "FUD", "1.00 USD"]' -p nick
 # TRIVIAL
 # invalid wipe quantity symbol / amount not > 0
@@ -462,7 +462,6 @@ echo -e "${CYAN}------------------TOGGLE SETTLE OFF FIRST-----------------------
 cleos push action $CONTRACT propose '["dick", "YOU", "4,EOS", "USD", 0, 0, 0, 0, 0, 0, 0, 0, "dick", "eosio.token"]' -p dick
 cleos push action $CONTRACT vote '["rick", "YOU", false, "0.001 IQ" ]' -p rick
 
-cleos get table $CONTRACT $CONTRACT feeds
 cleos get table $CONTRACT $CONTRACT stat
 sleep 10
 
@@ -535,7 +534,7 @@ cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "2.400 IQ"]' -p sic
 cleos push action $CONTRACT liquify '["sick", "nick", "FUD", "3.00 USD"]' -p sick
 # for two rounds, remainder 0.25
 cleos push action $CONTRACT liquify '["sick", "rick", "FUD", "2.75 USD"]' -p sick
-# for three rounds, remainder 0.75
+# for three rounds, remainder will be 0.30
 cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "2.70 USD"]' -p sick
 
 # wait for round to expire and switch to selling off IQ for the remaining balance
@@ -549,7 +548,7 @@ sleep 5
 # for two rounds, remainder 0
 cleos push action $CONTRACT liquify '["sick", "rick", "FUD", "0.25 USD"]' -p sick
 # for three rounds, remainder 0.05
-cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "0.50 USD"]' -p sick
+cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "0.25 USD"]' -p sick
 
 echo "=== Second round auction done, waiting for round to expire... ==="
 cleos get table $CONTRACT "FUD" cdp
@@ -559,7 +558,7 @@ sleep 5
 ##### ROUND 3 #####
 # auction covered more than the cdp debt, proceed to take bids in IQ for the diff
 
-cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "0.025 IQ"]' -p sick
+cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "0.050 IQ"]' -p sick
 sleep 5
 
 echo "=== Third round auction done, balance closed ==="

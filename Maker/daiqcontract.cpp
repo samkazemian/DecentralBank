@@ -487,7 +487,7 @@ ACTION daiqcontract::liquify( name bidder, name owner,
          });
       }
    } 
-   if ( it.stablecoin.amount == 0 ) {
+   if ( it.stablecoin.amount <= 0 ) {
       if ( it.collateral.amount ) {
          name contract = _self;
          if ( it.collateral.symbol == IQ_SYMBOL )
