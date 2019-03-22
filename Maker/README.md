@@ -8,10 +8,10 @@
 
 # Differences between cdpEOS (aka daiqcontract) and cdpETH (aka MakerDAO)
 
-daiqcontract successfully implements multi-collateral CDPs by accepting any eosio.token, and the entire protocol is implemented via only 15 distinct functions, and a little over 700 SLOC. 
+daiqcontract successfully implements multi-collateral CDPs by accepting any eosio.token, and the entire protocol is implemented via only 15 distinct functions, and just over 800 SLOC. 
 
 The major discrepancy between the two protocols is in how
-liquidation auctions, stability fees, and governance are handled. For instance, we enforce a constraint where the owner of a CDP cannot liquify their own CDP.
+liquidation auctions, stability fees, and governance are handled. Nonetheless, there are many concepts in common, such as the fact that liquidation may (and should) operate effectively in the absence of price feeds.
 
 To provide for better liquidity, Maker uses simultaneous (parallel) auctions of four types:
 
@@ -36,5 +36,5 @@ Global settlement is subjected to popular vote like any CDP change or creation p
 
 Global constants are the designated accounts that provide price feeds, the voting period of 2 weeks for proposals, and the minimum age of 5 minutes (how recent) for price data that is considered acceptable. 
 
-//TODO: 
+###### TODO
 medium.com/makerdao/dai-reward-rate-earn-a-reward-from-holding-dai-10a07f52f3cf

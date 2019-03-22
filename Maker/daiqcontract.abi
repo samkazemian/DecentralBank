@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Fri Mar 15 17:18:29 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Fri Mar 22 13:49:17 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -12,6 +12,10 @@
                 },
                 {
                     "name": "owner",
+                    "type": "name"
+                },
+                {
+                    "name": "code",
                     "type": "name"
                 }
             ]
@@ -145,8 +149,8 @@
             "base": "",
             "fields": [
                 {
-                    "name": "symbl",
-                    "type": "symbol_code"
+                    "name": "total",
+                    "type": "asset"
                 },
                 {
                     "name": "price",
@@ -155,10 +159,6 @@
                 {
                     "name": "stamp",
                     "type": "uint32"
-                },
-                {
-                    "name": "total",
-                    "type": "uint64"
                 }
             ]
         },
@@ -229,12 +229,12 @@
                     "type": "symbol_code"
                 },
                 {
-                    "name": "proposer",
-                    "type": "name"
-                },
-                {
                     "name": "deadline",
                     "type": "uint32"
+                },
+                {
+                    "name": "proposer",
+                    "type": "name"
                 },
                 {
                     "name": "yay",
@@ -260,7 +260,7 @@
                 },
                 {
                     "name": "clatrl",
-                    "type": "symbol_code"
+                    "type": "symbol"
                 },
                 {
                     "name": "stabl",
@@ -301,6 +301,10 @@
                 {
                     "name": "feeder",
                     "type": "name"
+                },
+                {
+                    "name": "contract",
+                    "type": "name"
                 }
             ]
         },
@@ -322,6 +326,10 @@
             "name": "settle",
             "base": "",
             "fields": [
+                {
+                    "name": "feeder",
+                    "type": "name"
+                },
                 {
                     "name": "symbl",
                     "type": "symbol_code"
@@ -399,12 +407,34 @@
                     "type": "asset"
                 },
                 {
-                    "name": "total_collateral",
+                    "name": "total_stablecoin",
                     "type": "asset"
                 },
                 {
-                    "name": "total_stablecoin",
+                    "name": "total_collateral",
+                    "type": "extended_asset"
+                }
+            ]
+        },
+        {
+            "name": "transfer",
+            "base": "",
+            "fields": [
+                {
+                    "name": "from",
+                    "type": "name"
+                },
+                {
+                    "name": "to",
+                    "type": "name"
+                },
+                {
+                    "name": "quantity",
                     "type": "asset"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
                 }
             ]
         },
@@ -426,7 +456,7 @@
                 },
                 {
                     "name": "symbl",
-                    "type": "symbol_code"
+                    "type": "symbol"
                 }
             ]
         },
@@ -467,10 +497,6 @@
                 {
                     "name": "quantity",
                     "type": "asset"
-                },
-                {
-                    "name": "fee",
-                    "type": "asset"
                 }
             ]
         },
@@ -479,11 +505,7 @@
             "base": "",
             "fields": [
                 {
-                    "name": "from",
-                    "type": "name"
-                },
-                {
-                    "name": "to",
+                    "name": "owner",
                     "type": "name"
                 },
                 {
@@ -552,6 +574,11 @@
         {
             "name": "shut",
             "type": "shut",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "transfer",
+            "type": "transfer",
             "ricardian_contract": ""
         },
         {
