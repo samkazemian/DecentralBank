@@ -459,21 +459,27 @@ ACTION daiqcontract::liquify( name bidder, name owner,
          eosio_assert( fv.stamp >= now() - FEED_FRESH,
                        "iq price feed data too stale"
                      ); 
-         uint64_t iqamt = ( it.stablecoin.amount / fv.price.amount ) * 1000;
          if ( it.stablecoin.amount > 0 )
-            cdpstable.modify( it, same_payer, [&]( auto& p ) 
-            {  p.collateral = asset( iqamt, IQ_SYMBOL ); });   
+            cdpstable.modify( it, same_payer, [&]( auto& p ) {  
+               if ( it.stablecoin.symbol == IQ_SYMBOL )
+                  p.collateral = asset( it.stablecoin.amount * fv.price.amount, 
+                                        fv.price.symbol 
+                                      ); 
+               else
+                  p.collateral = asset( it.stablecoin.amount * 1000 / fv.price.amount,
+                                        IQ_SYMBOL 
+                                      );
+            });   
          else if ( it.stablecoin.amount < 0 )
             cdpstable.modify( it, same_payer, [&]( auto& p ) {  
                p.collateral = -it.stablecoin;
                if ( it.stablecoin.symbol == IQ_SYMBOL )
-                  p.stablecoin = asset( -it.stablecoin.amount *  fv.price.amount, 
-                                        IQ_SYMBOL 
+                  p.stablecoin = asset( -it.stablecoin.amount * fv.price.amount, 
+                                        fv.price.symbol 
                                       );
-               else 
-                  p.stablecoin = asset( (-it.stablecoin.amount / fv.price.amount) * 1000, 
-                                        IQ_SYMBOL 
-                                      );
+               else p.stablecoin = asset( it.stablecoin.amount * 1000 / fv.price.amount, 
+                                          IQ_SYMBOL 
+                                        );
             });
          eosio_assert( bidamt.symbol == it.stablecoin.symbol, 
                        "bid is of wrong symbol" 

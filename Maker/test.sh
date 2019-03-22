@@ -563,6 +563,10 @@ cleos push action $CONTRACT liquify '["sick", "rick", "FUD", "0.05 USD"]' -p sic
 cleos push action $CONTRACT liquify '["sick", "dick", "FUD", "0.100 IQ"]' -p sick
 sleep 5
 
+# TODO covered not enough in round 2
+# covered not enough in round 3 
+# covered too much in round 3 
+
 echo "=== Third round auction done, balance closed ==="
 
 #verify that bid entry and cdp were in fact erased
