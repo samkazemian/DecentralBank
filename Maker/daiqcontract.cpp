@@ -477,7 +477,7 @@ ACTION daiqcontract::liquify( name bidder, name owner,
                   p.stablecoin = asset( -it.stablecoin.amount * fv.price.amount, 
                                         fv.price.symbol 
                                       );
-               else p.stablecoin = asset( it.stablecoin.amount * 1000 / fv.price.amount, 
+               else p.stablecoin = asset( -it.stablecoin.amount * 1000 / fv.price.amount, 
                                           IQ_SYMBOL 
                                         );
             });
